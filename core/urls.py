@@ -11,6 +11,12 @@ urlpatterns = [
     # ========== HOME ==========
     path('', views.home, name='home'),
     
+    # ========== USUÁRIOS (CRUD) ==========
+    path('usuarios/', views.user_list, name='user_list'),
+    path('usuarios/novo/', views.user_create, name='user_create'),
+    path('usuarios/<int:pk>/editar/', views.user_update, name='user_update'),
+    path('usuarios/<int:pk>/excluir/', views.user_delete, name='user_delete'),
+    
     # ========== CLIENTES (CRUD) ==========
     # path('clientes/', views.cliente_list, name='cliente_list'),
     # path('clientes/novo/', views.cliente_create, name='cliente_create'),

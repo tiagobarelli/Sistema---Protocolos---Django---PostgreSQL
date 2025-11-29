@@ -411,7 +411,7 @@
             {% if request.user.role == 'MASTER' %}
             <div class="nav-section-title">Administração</div>
             
-            <a href="#" class="nav-link">
+            <a href="{% url 'user_list' %}" class="nav-link {% if 'usuarios' in request.path %}active{% endif %}">
                 <i class="bi bi-person-gear"></i>
                 <span>Usuários</span>
             </a>
@@ -433,17 +433,17 @@
             {% for message in messages %}
             <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
                 <i class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
-                {{ message }}
+                    {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
-            </div>
+                </div>
             {% endfor %}
         </div>
         {% endif %}
 
         <!-- Container para Vue.js (futuro) -->
         <div id="app">
-            {% block content %}
-            {% endblock %}
+        {% block content %}
+        {% endblock %}
         </div>
     </main>
 

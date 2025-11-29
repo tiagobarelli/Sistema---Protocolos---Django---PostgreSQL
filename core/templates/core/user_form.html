@@ -1,0 +1,255 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ title }} - Sistema de Protocolos{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1>
+        <i class="bi bi-{% if user_obj %}pencil-square{% else %}person-plus{% endif %} me-2"></i>
+        {{ title }}
+    </h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Início</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'user_list' %}">Usuários</a></li>
+            <li class="breadcrumb-item active">{{ title }}</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-8">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <!-- Card: Dados Pessoais -->
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person me-2"></i>
+                        Dados Pessoais
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="id_first_name" class="form-label">
+                                Nome <span class="text-danger">*</span>
+                            </label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.first_name.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_last_name" class="form-label">
+                                Sobrenome <span class="text-danger">*</span>
+                            </label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.last_name.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-12">
+                            <label for="id_email" class="form-label">
+                                E-mail
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.email.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Acesso ao Sistema -->
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-shield-lock me-2"></i>
+                        Acesso ao Sistema
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="id_username" class="form-label">
+                                Usuário (Login) <span class="text-danger">*</span>
+                            </label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.username.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Será usado para entrar no sistema.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_role" class="form-label">
+                                Função <span class="text-danger">*</span>
+                            </label>
+                            {{ form.role }}
+                            {% if form.role.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.role.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_password" class="form-label">
+                                Senha {% if not user_obj %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            {{ form.password }}
+                            {% if form.password.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.password.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                            {% if user_obj %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Deixe em branco para manter a senha atual.
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_password_confirm" class="form-label">
+                                Confirmar Senha {% if not user_obj %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            {{ form.password_confirm }}
+                            {% if form.password_confirm.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.password_confirm.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="id_is_active">
+                                    Usuário Ativo
+                                </label>
+                            </div>
+                            <div class="form-text">
+                                Usuários inativos não conseguem fazer login no sistema.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Erros Gerais do Form -->
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                {{ form.non_field_errors|join:", " }}
+            </div>
+            {% endif %}
+
+            <!-- Botões de Ação -->
+            <div class="d-flex gap-2 justify-content-end">
+                <a href="{% url 'user_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg me-1"></i>
+                    Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i>
+                    {{ button_text }}
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Sidebar de Ajuda -->
+    <div class="col-12 col-lg-4">
+        <div class="card bg-light border-0">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-lightbulb me-1"></i>
+                    Dicas
+                </h6>
+                <hr>
+                <p class="small text-muted mb-2">
+                    <strong>Funções dos usuários:</strong>
+                </p>
+                <ul class="small text-muted ps-3">
+                    <li>
+                        <strong class="text-danger">Master:</strong> 
+                        Acesso total ao sistema, incluindo configurações e gerenciamento de usuários.
+                    </li>
+                    <li>
+                        <strong class="text-warning">Administrativo:</strong> 
+                        Pode gerenciar protocolos e clientes, mas não tem acesso às configurações.
+                    </li>
+                    <li>
+                        <strong class="text-secondary">Escrevente:</strong> 
+                        Acesso básico para inserir e visualizar protocolos.
+                    </li>
+                </ul>
+                <hr>
+                <p class="small text-muted mb-0">
+                    <i class="bi bi-shield-check me-1"></i>
+                    A senha deve ter pelo menos 6 caracteres.
+                </p>
+            </div>
+        </div>
+        
+        {% if user_obj %}
+        <div class="card mt-3 border-0 bg-light">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Informações
+                </h6>
+                <hr>
+                <ul class="list-unstyled small text-muted mb-0">
+                    <li class="mb-2">
+                        <strong>Cadastrado em:</strong><br>
+                        {{ user_obj.date_joined|date:"d/m/Y H:i" }}
+                    </li>
+                    <li class="mb-2">
+                        <strong>Último login:</strong><br>
+                        {% if user_obj.last_login %}
+                        {{ user_obj.last_login|date:"d/m/Y H:i" }}
+                        {% else %}
+                        <span class="text-muted">Nunca acessou</span>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 0.2rem rgba(49, 130, 206, 0.15);
+    }
+    
+    .form-control.is-invalid,
+    .form-select.is-invalid {
+        border-color: #dc3545;
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--primary-light);
+        border-color: var(--primary-light);
+    }
+</style>
+{% endblock %}
+
