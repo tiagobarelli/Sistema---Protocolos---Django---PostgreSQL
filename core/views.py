@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.core.paginator import Paginator
 from django.db.models import Q
 
-from .forms import SetupMasterForm, UserForm, TabelionatoForm, TipoAtoForm
+from .forms import SetupMasterForm, UserForm, TabelionatoForm, TipoAtoForm, ClienteForm
 from .models import Protocolo, Cliente, Tabelionato, TipoAto
 
 User = get_user_model()
@@ -341,3 +341,85 @@ def tipo_ato_toggle(request, pk):
         messages.success(request, f'Tipo de Ato "{tipo_ato.nome}" {status} com sucesso!')
     
     return redirect('settings_view')
+
+
+# ========== CRUD DE CLIENTES ==========
+
+@login_required
+def cliente_list(request):
+    """Lista todos os clientes com busca e paginação."""
+    clientes = Cliente.objects.all().order_by('nome')
+    
+    # Busca por nome, CPF ou CNPJ
+    search = request.GET.get('search', '').strip()
+    if search:
+        clientes = clientes.filter(
+            Q(nome__icontains=search) |
+            Q(cpf__icontains=search) |
+            Q(cnpj__icontains=search) |
+            Q(email__icontains=search)
+        )
+    
+    # Filtro por tipo de pessoa
+    tipo_filter = request.GET.get('tipo', '')
+    if tipo_filter:
+        clientes = clientes.filter(tipo_pessoa=tipo_filter)
+    
+    # Paginação
+    paginator = Paginator(clientes, 20)
+    page = request.GET.get('page', 1)
+    clientes_page = paginator.get_page(page)
+    
+    context = {
+        'clientes': clientes_page,
+        'search': search,
+        'tipo_filter': tipo_filter,
+        'tipos_pessoa': Cliente.TipoPessoa.choices,
+    }
+    
+    return render(request, 'core/cliente_list.html', context)
+
+
+@login_required
+def cliente_create(request):
+    """Cria um novo cliente."""
+    if request.method == 'POST':
+        form = ClienteForm(request.POST)
+        if form.is_valid():
+            cliente = form.save()
+            messages.success(request, f'Cliente "{cliente.nome}" cadastrado com sucesso!')
+            return redirect('cliente_list')
+    else:
+        form = ClienteForm()
+    
+    context = {
+        'form': form,
+        'title': 'Novo Cliente',
+        'button_text': 'Cadastrar Cliente',
+    }
+    
+    return render(request, 'core/cliente_form.html', context)
+
+
+@login_required
+def cliente_update(request, pk):
+    """Edita um cliente existente."""
+    cliente = get_object_or_404(Cliente, pk=pk)
+    
+    if request.method == 'POST':
+        form = ClienteForm(request.POST, instance=cliente)
+        if form.is_valid():
+            cliente = form.save()
+            messages.success(request, f'Cliente "{cliente.nome}" atualizado com sucesso!')
+            return redirect('cliente_list')
+    else:
+        form = ClienteForm(instance=cliente)
+    
+    context = {
+        'form': form,
+        'cliente': cliente,
+        'title': f'Editar Cliente: {cliente.nome}',
+        'button_text': 'Salvar Alterações',
+    }
+    
+    return render(request, 'core/cliente_form.html', context)

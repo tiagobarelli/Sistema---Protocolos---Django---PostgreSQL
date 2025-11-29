@@ -401,7 +401,7 @@
             <!-- Seção Cadastros -->
             <div class="nav-section-title">Cadastros</div>
             
-            <a href="#" class="nav-link">
+            <a href="{% url 'cliente_list' %}" class="nav-link {% if 'clientes' in request.path %}active{% endif %}">
                 <i class="bi bi-people"></i>
                 <span>Clientes</span>
             </a>

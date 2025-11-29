@@ -1,0 +1,203 @@
+{% extends 'core/base.html' %}
+{% load format_utils %}
+
+{% block title %}Clientes - Sistema de Protocolos{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <h1><i class="bi bi-people me-2"></i>Gestão de Clientes</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Início</a></li>
+                <li class="breadcrumb-item active">Clientes</li>
+            </ol>
+        </nav>
+    </div>
+    <a href="{% url 'cliente_create' %}" class="btn btn-primary">
+        <i class="bi bi-person-plus me-1"></i>
+        Novo Cliente
+    </a>
+</div>
+
+<!-- Card de Filtros -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-12 col-md-5">
+                <label class="form-label small text-muted">Buscar</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Nome, CPF, CNPJ ou e-mail..." 
+                           value="{{ search }}">
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label small text-muted">Tipo de Pessoa</label>
+                <select name="tipo" class="form-select">
+                    <option value="">Todos</option>
+                    {% for value, label in tipos_pessoa %}
+                    <option value="{{ value }}" {% if tipo_filter == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-6 col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="bi bi-funnel me-1"></i>Filtrar
+                </button>
+                <a href="{% url 'cliente_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg me-1"></i>Limpar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabela de Clientes -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Nome / Razão Social</th>
+                        <th class="text-center">Tipo</th>
+                        <th>Documento</th>
+                        <th>Telefone</th>
+                        <th>E-mail</th>
+                        <th class="text-center pe-3" style="width: 100px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                    <tr>
+                        <td class="ps-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar-circle {% if cliente.tipo_pessoa == 'FISICA' %}bg-primary{% else %}bg-warning{% endif %} text-white">
+                                    {% if cliente.tipo_pessoa == 'FISICA' %}
+                                    <i class="bi bi-person"></i>
+                                    {% else %}
+                                    <i class="bi bi-building"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <strong>{{ cliente.nome }}</strong>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            {% if cliente.tipo_pessoa == 'FISICA' %}
+                            <span class="badge bg-primary-subtle text-primary">
+                                <i class="bi bi-person me-1"></i>Física
+                            </span>
+                            {% else %}
+                            <span class="badge bg-warning-subtle text-warning">
+                                <i class="bi bi-building me-1"></i>Jurídica
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <code class="text-dark">
+                                {% if cliente.tipo_pessoa == 'FISICA' %}
+                                {{ cliente.cpf|format_cpf|default:"-" }}
+                                {% else %}
+                                {{ cliente.cnpj|format_cnpj|default:"-" }}
+                                {% endif %}
+                            </code>
+                        </td>
+                        <td>{{ cliente.telefone|format_telefone|default:"-" }}</td>
+                        <td>
+                            {% if cliente.email %}
+                            <a href="mailto:{{ cliente.email }}" class="text-decoration-none">
+                                {{ cliente.email }}
+                            </a>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center pe-3">
+                            <a href="{% url 'cliente_update' cliente.pk %}" 
+                               class="btn btn-sm btn-outline-primary" 
+                               title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <i class="bi bi-people fs-1 text-muted"></i>
+                            <p class="text-muted mt-2 mb-3">Nenhum cliente encontrado.</p>
+                            <a href="{% url 'cliente_create' %}" class="btn btn-primary btn-sm">
+                                <i class="bi bi-person-plus me-1"></i>
+                                Cadastrar Primeiro Cliente
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Paginação -->
+    {% if clientes.has_other_pages %}
+    <div class="card-footer bg-transparent">
+        <nav aria-label="Paginação">
+            <ul class="pagination pagination-sm justify-content-center mb-0">
+                {% if clientes.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ clientes.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if tipo_filter %}&tipo={{ tipo_filter }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in clientes.paginator.page_range %}
+                    {% if clientes.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > clientes.number|add:'-3' and num < clientes.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if tipo_filter %}&tipo={{ tipo_filter }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if clientes.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ clientes.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if tipo_filter %}&tipo={{ tipo_filter }}{% endif %}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Resumo -->
+<div class="text-muted small mt-3">
+    <i class="bi bi-info-circle me-1"></i>
+    Total: <strong>{{ clientes.paginator.count }}</strong> cliente(s) cadastrado(s)
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .avatar-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+</style>
+{% endblock %}
+

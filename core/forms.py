@@ -1,7 +1,7 @@
 from datetime import timedelta
 from django import forms
 from django.contrib.auth import get_user_model
-from .models import Tabelionato, TipoAto
+from .models import Tabelionato, TipoAto, Cliente
 
 User = get_user_model()
 
@@ -257,3 +257,104 @@ class TipoAtoForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+# ========== CLIENTES ==========
+
+class ClienteForm(forms.ModelForm):
+    """
+    Formulário para cadastro e edição de Clientes (PF/PJ).
+    O campo CPF/CNPJ é mostrado dinamicamente via JavaScript no template.
+    """
+    
+    class Meta:
+        model = Cliente
+        fields = ['nome', 'tipo_pessoa', 'cpf', 'cnpj', 'telefone', 'email', 'endereco']
+        labels = {
+            'nome': 'Nome Completo / Razão Social',
+            'tipo_pessoa': 'Tipo de Pessoa',
+            'cpf': 'CPF',
+            'cnpj': 'CNPJ',
+            'telefone': 'Telefone',
+            'email': 'E-mail',
+            'endereco': 'Endereço Completo',
+        }
+        widgets = {
+            'nome': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nome completo ou razão social'
+            }),
+            'tipo_pessoa': forms.Select(attrs={
+                'class': 'form-select',
+                'id': 'id_tipo_pessoa'
+            }),
+            'cpf': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '000.000.000-00',
+                'data-mask': 'cpf'
+            }),
+            'cnpj': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '00.000.000/0000-00',
+                'data-mask': 'cnpj'
+            }),
+            'telefone': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '(00) 00000-0000'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'email@exemplo.com'
+            }),
+            'endereco': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Rua, número, bairro, cidade - UF, CEP',
+                'rows': 3
+            }),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Campos CPF e CNPJ são opcionais no form (validação é feita no clean)
+        self.fields['cpf'].required = False
+        self.fields['cnpj'].required = False
+    
+    def _limpar_documento(self, valor):
+        """Remove pontuação de CPF/CNPJ, mantendo apenas números."""
+        if valor:
+            import re
+            return re.sub(r'\D', '', valor)
+        return valor
+    
+    def clean_cpf(self):
+        """Limpa pontuação do CPF antes de salvar."""
+        cpf = self.cleaned_data.get('cpf')
+        return self._limpar_documento(cpf) if cpf else None
+    
+    def clean_cnpj(self):
+        """Limpa pontuação do CNPJ antes de salvar."""
+        cnpj = self.cleaned_data.get('cnpj')
+        return self._limpar_documento(cnpj) if cnpj else None
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        tipo_pessoa = cleaned_data.get('tipo_pessoa')
+        cpf = cleaned_data.get('cpf')
+        cnpj = cleaned_data.get('cnpj')
+        
+        # Limpa o campo que não deve ser preenchido baseado no tipo
+        if tipo_pessoa == Cliente.TipoPessoa.FISICA:
+            # Pessoa Física: precisa de CPF, não pode ter CNPJ
+            if not cpf:
+                self.add_error('cpf', 'CPF é obrigatório para Pessoa Física.')
+            # Limpa CNPJ se preenchido (pode ter sido preenchido antes de trocar o tipo)
+            cleaned_data['cnpj'] = None
+            
+        elif tipo_pessoa == Cliente.TipoPessoa.JURIDICA:
+            # Pessoa Jurídica: precisa de CNPJ, não pode ter CPF
+            if not cnpj:
+                self.add_error('cnpj', 'CNPJ é obrigatório para Pessoa Jurídica.')
+            # Limpa CPF se preenchido
+            cleaned_data['cpf'] = None
+        
+        return cleaned_data

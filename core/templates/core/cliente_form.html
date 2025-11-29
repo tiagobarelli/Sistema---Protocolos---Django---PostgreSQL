@@ -1,0 +1,395 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ title }} - Sistema de Protocolos{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1>
+        <i class="bi bi-{% if cliente %}pencil-square{% else %}person-plus{% endif %} me-2"></i>
+        {{ title }}
+    </h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Início</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'cliente_list' %}">Clientes</a></li>
+            <li class="breadcrumb-item active">{{ title }}</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-8">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <!-- Card: Identificação -->
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-badge me-2"></i>
+                        Identificação
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Tipo de Pessoa -->
+                        <div class="col-md-4">
+                            <label for="id_tipo_pessoa" class="form-label fw-medium">
+                                Tipo de Pessoa <span class="text-danger">*</span>
+                            </label>
+                            {{ form.tipo_pessoa }}
+                            {% if form.tipo_pessoa.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.tipo_pessoa.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Nome -->
+                        <div class="col-md-8">
+                            <label for="id_nome" class="form-label fw-medium">
+                                <span id="label_nome">Nome Completo / Razão Social</span> <span class="text-danger">*</span>
+                            </label>
+                            {{ form.nome }}
+                            {% if form.nome.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.nome.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- CPF (Pessoa Física) -->
+                        <div class="col-md-6" id="container_cpf">
+                            <label for="id_cpf" class="form-label fw-medium">
+                                CPF <span class="text-danger">*</span>
+                            </label>
+                            {{ form.cpf }}
+                            {% if form.cpf.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.cpf.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- CNPJ (Pessoa Jurídica) -->
+                        <div class="col-md-6" id="container_cnpj" style="display: none;">
+                            <label for="id_cnpj" class="form-label fw-medium">
+                                CNPJ <span class="text-danger">*</span>
+                            </label>
+                            {{ form.cnpj }}
+                            {% if form.cnpj.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.cnpj.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Contato -->
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-telephone me-2"></i>
+                        Informações de Contato
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="id_telefone" class="form-label fw-medium">
+                                Telefone
+                            </label>
+                            {{ form.telefone }}
+                            {% if form.telefone.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.telefone.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="id_email" class="form-label fw-medium">
+                                E-mail
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.email.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="id_endereco" class="form-label fw-medium">
+                                Endereço Completo
+                            </label>
+                            {{ form.endereco }}
+                            {% if form.endereco.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.endereco.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Erros Gerais do Form -->
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                {{ form.non_field_errors|join:", " }}
+            </div>
+            {% endif %}
+
+            <!-- Botões de Ação -->
+            <div class="d-flex gap-2 justify-content-end">
+                <a href="{% url 'cliente_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg me-1"></i>
+                    Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i>
+                    {{ button_text }}
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Sidebar de Ajuda -->
+    <div class="col-12 col-lg-4">
+        <div class="card bg-light border-0">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-lightbulb me-1"></i>
+                    Dicas
+                </h6>
+                <hr>
+                <p class="small text-muted mb-2">
+                    <strong>Pessoa Física:</strong>
+                </p>
+                <ul class="small text-muted ps-3">
+                    <li>Informe o nome completo</li>
+                    <li>CPF é obrigatório</li>
+                </ul>
+                <p class="small text-muted mb-2">
+                    <strong>Pessoa Jurídica:</strong>
+                </p>
+                <ul class="small text-muted ps-3 mb-0">
+                    <li>Informe a razão social</li>
+                    <li>CNPJ é obrigatório</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card bg-warning-subtle border-0 mt-3">
+            <div class="card-body">
+                <h6 class="card-title text-warning">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Importante
+                </h6>
+                <hr class="border-warning">
+                <p class="small text-muted mb-0">
+                    O CPF/CNPJ cadastrado deve ser único no sistema. 
+                    Verifique se o cliente já não está cadastrado antes de criar um novo registro.
+                </p>
+            </div>
+        </div>
+        
+        {% if cliente %}
+        <div class="card border-0 bg-light mt-3">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Informações
+                </h6>
+                <hr>
+                <ul class="list-unstyled small text-muted mb-0">
+                    <li class="mb-2">
+                        <strong>ID:</strong> {{ cliente.pk }}
+                    </li>
+                    <li class="mb-2">
+                        <strong>Tipo:</strong> {{ cliente.get_tipo_pessoa_display }}
+                    </li>
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 0.2rem rgba(49, 130, 206, 0.15);
+    }
+    
+    .hidden-field {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoPessoaSelect = document.getElementById('id_tipo_pessoa');
+    const containerCPF = document.getElementById('container_cpf');
+    const containerCNPJ = document.getElementById('container_cnpj');
+    const inputCPF = document.getElementById('id_cpf');
+    const inputCNPJ = document.getElementById('id_cnpj');
+    const labelNome = document.getElementById('label_nome');
+    
+    // ========== MÁSCARAS DE CPF E CNPJ ==========
+    
+    /**
+     * Aplica máscara de CPF: 000.000.000-00
+     */
+    function maskCPF(value) {
+        // Remove tudo que não é número
+        let v = value.replace(/\D/g, '');
+        
+        // Limita a 11 dígitos
+        v = v.substring(0, 11);
+        
+        // Aplica a máscara progressivamente
+        if (v.length > 9) {
+            v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+        } else if (v.length > 6) {
+            v = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+        } else if (v.length > 3) {
+            v = v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+        }
+        
+        return v;
+    }
+    
+    /**
+     * Aplica máscara de CNPJ: 00.000.000/0000-00
+     */
+    function maskCNPJ(value) {
+        // Remove tudo que não é número
+        let v = value.replace(/\D/g, '');
+        
+        // Limita a 14 dígitos
+        v = v.substring(0, 14);
+        
+        // Aplica a máscara progressivamente
+        if (v.length > 12) {
+            v = v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/, '$1.$2.$3/$4-$5');
+        } else if (v.length > 8) {
+            v = v.replace(/(\d{2})(\d{3})(\d{3})(\d{1,4})/, '$1.$2.$3/$4');
+        } else if (v.length > 5) {
+            v = v.replace(/(\d{2})(\d{3})(\d{1,3})/, '$1.$2.$3');
+        } else if (v.length > 2) {
+            v = v.replace(/(\d{2})(\d{1,3})/, '$1.$2');
+        }
+        
+        return v;
+    }
+    
+    /**
+     * Aplica máscara de Telefone: (00) 00000-0000 ou (00) 0000-0000
+     */
+    function maskTelefone(value) {
+        let v = value.replace(/\D/g, '');
+        v = v.substring(0, 11);
+        
+        if (v.length > 10) {
+            // Celular: (00) 00000-0000
+            v = v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+        } else if (v.length > 6) {
+            // Fixo: (00) 0000-0000
+            v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+        } else if (v.length > 2) {
+            v = v.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+        }
+        
+        return v;
+    }
+    
+    // Aplica máscaras nos inputs
+    if (inputCPF) {
+        inputCPF.addEventListener('input', function(e) {
+            e.target.value = maskCPF(e.target.value);
+        });
+        // Formata valor inicial (edição)
+        if (inputCPF.value) {
+            inputCPF.value = maskCPF(inputCPF.value);
+        }
+    }
+    
+    if (inputCNPJ) {
+        inputCNPJ.addEventListener('input', function(e) {
+            e.target.value = maskCNPJ(e.target.value);
+        });
+        // Formata valor inicial (edição)
+        if (inputCNPJ.value) {
+            inputCNPJ.value = maskCNPJ(inputCNPJ.value);
+        }
+    }
+    
+    // Máscara de telefone
+    const inputTelefone = document.getElementById('id_telefone');
+    if (inputTelefone) {
+        inputTelefone.addEventListener('input', function(e) {
+            e.target.value = maskTelefone(e.target.value);
+        });
+        // Formata valor inicial (edição)
+        if (inputTelefone.value) {
+            inputTelefone.value = maskTelefone(inputTelefone.value);
+        }
+    }
+    
+    // ========== TOGGLE CPF/CNPJ ==========
+    
+    function toggleDocumentoFields() {
+        const tipo = tipoPessoaSelect.value;
+        
+        if (tipo === 'FISICA') {
+            // Pessoa Física: mostrar CPF, esconder CNPJ
+            containerCPF.style.display = 'block';
+            containerCNPJ.style.display = 'none';
+            
+            // Limpar CNPJ quando trocar para PF
+            if (inputCNPJ) {
+                inputCNPJ.value = '';
+            }
+            
+            // Atualizar label
+            if (labelNome) {
+                labelNome.textContent = 'Nome Completo';
+            }
+            
+        } else if (tipo === 'JURIDICA') {
+            // Pessoa Jurídica: mostrar CNPJ, esconder CPF
+            containerCPF.style.display = 'none';
+            containerCNPJ.style.display = 'block';
+            
+            // Limpar CPF quando trocar para PJ
+            if (inputCPF) {
+                inputCPF.value = '';
+            }
+            
+            // Atualizar label
+            if (labelNome) {
+                labelNome.textContent = 'Razão Social';
+            }
+        }
+    }
+    
+    // Executar ao carregar a página (para edição ou erro de validação)
+    toggleDocumentoFields();
+    
+    // Executar quando o usuário mudar o tipo de pessoa
+    tipoPessoaSelect.addEventListener('change', toggleDocumentoFields);
+});
+</script>
+{% endblock %}
+
