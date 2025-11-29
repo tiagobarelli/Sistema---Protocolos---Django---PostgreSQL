@@ -4,6 +4,7 @@ from django.db.models import Max
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import ArrayField
+from django.utils import timezone
 
 # 1. USUÁRIOS PERSONALIZADOS
 class User(AbstractUser):
@@ -173,6 +174,29 @@ class Protocolo(models.Model):
             self.numero_protocolo = str(proximo)
         
         super().save(*args, **kwargs)
+
+    @property
+    def esta_atrasado(self):
+        """
+        Verifica se o protocolo está atrasado baseado no tipo e tempo_alerta.
+        - CERTIDAO: limite fixo de 5 dias corridos
+        - ATO_NOTARIAL: usa tempo_alerta do TipoAto (se existir)
+        """
+        agora = timezone.now()
+        diferenca = agora - self.data_criacao
+        
+        if self.tipo == self.TipoProtocolo.CERTIDAO:
+            # Limite fixo de 5 dias para certidões
+            limite = timezone.timedelta(days=5)
+            return diferenca > limite
+        
+        elif self.tipo == self.TipoProtocolo.ATO_NOTARIAL:
+            # Para atos notariais, verifica o tempo_alerta do TipoAto
+            if not self.tipo_ato or not self.tipo_ato.tempo_alerta:
+                return False  # Sem tempo_alerta definido, não há atraso
+            return diferenca > self.tipo_ato.tempo_alerta
+        
+        return False
 
     def __str__(self):
         return f"Prot: {self.numero_protocolo} - {self.get_status_display()}"

@@ -1,0 +1,208 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Protocolos em Andamento{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>
+        <i class="bi bi-folder2-open me-2"></i>
+        Protocolos em Andamento
+    </h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Início</a></li>
+            <li class="breadcrumb-item active">Protocolos em Andamento</li>
+        </ol>
+    </nav>
+</div>
+
+{% if protocolos %}
+    <div class="row g-4">
+        {% for protocolo in protocolos %}
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="card h-100 {% if protocolo.esta_atrasado %}border-danger border-2{% else %}border-light{% endif %}">
+                <!-- Cabeçalho do Card -->
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong class="text-primary">Protocolo #{{ protocolo.numero_protocolo }}</strong>
+                        {% if protocolo.esta_atrasado %}
+                            <i class="bi bi-exclamation-triangle-fill text-danger ms-2" title="Protocolo Atrasado"></i>
+                        {% endif %}
+                    </div>
+                    <span class="badge bg-warning-subtle text-warning-emphasis">
+                        {{ protocolo.get_status_display }}
+                    </span>
+                </div>
+
+                <!-- Corpo do Card -->
+                <div class="card-body">
+                    <!-- Tipo de Ato -->
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Tipo:</small>
+                        <strong>{{ protocolo.tipo_ato.nome }}</strong>
+                    </div>
+
+                    <!-- Clientes -->
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Cliente(s):</small>
+                        {% with primeiro_cliente=protocolo.clientes.first total_clientes=protocolo.clientes.count %}
+                            <span>{{ primeiro_cliente.nome }}</span>
+                            {% if total_clientes > 1 %}
+                                <span class="text-muted">+{{ total_clientes|add:"-1" }}</span>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+
+                    <!-- Advogados (se existir) -->
+                    {% if protocolo.advogados.exists %}
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Advogado(s):</small>
+                        {% with primeiro_advogado=protocolo.advogados.first total_advogados=protocolo.advogados.count %}
+                            <span>{{ primeiro_advogado.nome }}</span>
+                            {% if total_advogados > 1 %}
+                                <span class="text-muted">+{{ total_advogados|add:"-1" }}</span>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Datas -->
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Data de Criação:</small>
+                        <span>{{ protocolo.data_criacao|date:"d/m/Y H:i" }}</span>
+                    </div>
+
+                    {% if protocolo.data_agendamento %}
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Agendamento:</small>
+                        <span>{{ protocolo.data_agendamento|date:"d/m/Y" }}</span>
+                        {% if protocolo.horario_agendamento %}
+                            <span class="text-muted">às {{ protocolo.horario_agendamento|time:"H:i" }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Rodapé do Card -->
+                <div class="card-footer bg-transparent border-top">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            {% if protocolo.responsavel %}
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle me-2">
+                                        <span class="avatar-text">
+                                            {{ protocolo.responsavel.first_name|first|default:protocolo.responsavel.username|first|upper }}
+                                        </span>
+                                    </div>
+                                    <small class="text-muted">
+                                        {{ protocolo.responsavel.get_full_name|default:protocolo.responsavel.username }}
+                                    </small>
+                                </div>
+                            {% else %}
+                                <small class="text-muted">Sem responsável</small>
+                            {% endif %}
+                        </div>
+                        {% if protocolo.tipo == 'CERTIDAO' %}
+                            <a href="{% url 'protocolo_certidao_update' protocolo.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye me-1"></i>
+                                Ver Detalhes
+                            </a>
+                        {% else %}
+                            <a href="#" class="btn btn-sm btn-outline-secondary" title="Edição de Atos Notariais em desenvolvimento">
+                                <i class="bi bi-eye me-1"></i>
+                                Ver Detalhes
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Paginação -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Paginação de protocolos" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">Primeira</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Primeira</span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link">Anterior</span>
+                </li>
+            {% endif %}
+
+            <li class="page-item active">
+                <span class="page-link">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Próxima</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Próxima</span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link">Última</span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+{% else %}
+    <div class="alert alert-info" role="alert">
+        <i class="bi bi-info-circle me-2"></i>
+        Nenhum protocolo em andamento encontrado.
+    </div>
+{% endif %}
+
+<style>
+    .avatar-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .avatar-text {
+        line-height: 1;
+    }
+
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+    }
+
+    .card.border-danger {
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+    }
+</style>
+{% endblock %}
+

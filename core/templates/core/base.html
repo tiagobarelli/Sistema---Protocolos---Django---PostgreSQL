@@ -380,7 +380,7 @@
             </a>
             
             <div class="collapse nav-submenu" id="gestaoSubmenu">
-                <a href="#" class="nav-link">
+                <a href="{% url 'protocolo_list_em_andamento' %}" class="nav-link {% if request.resolver_match.url_name == 'protocolo_list_em_andamento' %}active{% endif %}">
                     <i class="bi bi-circle-fill text-primary"></i>
                     <span>Em Andamento</span>
                 </a>

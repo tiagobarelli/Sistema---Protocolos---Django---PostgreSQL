@@ -33,6 +33,9 @@ urlpatterns = [
     path('protocolos/certidao/novo/', views.protocolo_certidao_create, name='protocolo_certidao_create'),
     path('protocolos/certidao/<int:pk>/editar/', views.protocolo_certidao_update, name='protocolo_certidao_update'),
     
+    # ========== PROTOCOLOS - LISTAGEM ==========
+    path('protocolos/em-andamento/', views.protocolo_list_em_andamento, name='protocolo_list_em_andamento'),
+    
     # ========== PROTOCOLOS ==========
     # path('protocolos/', views.protocolo_list, name='protocolo_list'),
     # path('protocolos/ato/novo/', views.protocolo_create_ato, name='protocolo_create_ato'),

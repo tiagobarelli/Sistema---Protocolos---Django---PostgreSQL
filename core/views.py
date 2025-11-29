@@ -786,3 +786,30 @@ def protocolo_certidao_update(request, pk):
         'success': success,
     }
     return render(request, 'core/protocolo_certidao_form.html', context)
+
+
+# ========== PROTOCOLOS - LISTAGEM ==========
+
+@login_required
+def protocolo_list_em_andamento(request):
+    """
+    Lista todos os protocolos com status EM_ANDAMENTO em formato de cards.
+    """
+    protocolos = Protocolo.objects.filter(
+        status=Protocolo.StatusProtocolo.EM_ANDAMENTO
+    ).select_related(
+        'tipo_ato', 'responsavel', 'criado_por'
+    ).prefetch_related(
+        'clientes', 'advogados'
+    ).order_by('-data_criacao')
+    
+    # Paginação: 12 cards por página
+    paginator = Paginator(protocolos, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'protocolos': page_obj,
+    }
+    return render(request, 'core/protocolo_list_cards.html', context)
