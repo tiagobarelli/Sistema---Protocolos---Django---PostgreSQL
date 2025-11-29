@@ -217,6 +217,17 @@
             padding: 1.5rem;
         }
 
+        /* Layout para páginas públicas (Login, Setup) */
+        .app-main-public {
+            margin-left: 0;
+            margin-top: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
         /* Área para Vue.js */
         #app {
             min-height: 100%;
@@ -299,6 +310,7 @@
     </style>
 </head>
 <body>
+    {% if user.is_authenticated %}
     <!-- ========== HEADER ========== -->
     <header class="app-header">
         <div class="d-flex align-items-center">
@@ -424,9 +436,10 @@
 
         </nav>
     </aside>
+    {% endif %}
 
     <!-- ========== MAIN CONTENT ========== -->
-    <main class="app-main">
+    <main class="{% if user.is_authenticated %}app-main{% else %}app-main-public{% endif %}">
         <!-- Alertas/Mensagens do Django -->
         {% if messages %}
         <div class="app-alerts">

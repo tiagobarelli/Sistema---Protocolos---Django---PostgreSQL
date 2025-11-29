@@ -3,42 +3,162 @@
 {% block title %}Instalação do Sistema{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
-    <div class="col-md-6 col-lg-5">
-        <div class="card card-shadow border-0">
-            <div class="card-header bg-primary text-white text-center py-3">
-                <h4 class="mb-0">Configuração Inicial</h4>
-                <small>Defina o Administrador Master</small>
+<div class="setup-container">
+    <div class="setup-card">
+        <!-- Logo e Título -->
+        <div class="text-center mb-4">
+            <div class="setup-logo mb-3">
+                <i class="bi bi-gear-fill"></i>
+            </div>
+            <h2 class="fw-bold" style="color: var(--primary-dark);">Configuração Inicial</h2>
+            <p class="text-muted mb-0">Sistema de Protocolos Notariais</p>
+        </div>
+        
+        <!-- Card de Setup -->
+        <div class="card border-0 shadow-lg">
+            <div class="card-header text-center py-3" style="background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);">
+                <h5 class="mb-1 text-white fw-semibold">
+                    <i class="bi bi-shield-lock me-2"></i>
+                    Criar Administrador Master
+                </h5>
+                <small class="text-white-50">Primeiro acesso ao sistema</small>
             </div>
             <div class="card-body p-4">
-                <p class="text-muted text-center mb-4">
-                    Nenhum usuário foi detectado no banco de dados. 
-                    Crie o acesso principal abaixo.
-                </p>
+                <div class="alert alert-info d-flex align-items-start mb-4" role="alert">
+                    <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+                    <div class="small">
+                        Nenhum usuário foi detectado no banco de dados. 
+                        Crie o acesso principal abaixo para começar a usar o sistema.
+                    </div>
+                </div>
 
                 <form method="post">
                     {% csrf_token %}
                     
-                    {% for field in form %}
-                        <div class="mb-3">
-                            <label for="{{ field.id_for_label }}" class="form-label fw-bold">{{ field.label }}</label>
-                            {{ field }}
-                            {% if field.errors %}
-                                <div class="text-danger small mt-1">
-                                    {{ field.errors.0 }}
-                                </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_first_name" class="form-label fw-medium">Nome</label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                            <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
                             {% endif %}
                         </div>
-                    {% endfor %}
+                        <div class="col-md-6 mb-3">
+                            <label for="id_last_name" class="form-label fw-medium">Sobrenome</label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                            <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_email" class="form-label fw-medium">E-mail</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                        <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label fw-medium">Usuário (Login)</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                        <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_password" class="form-label fw-medium">Senha</label>
+                            {{ form.password }}
+                            {% if form.password.errors %}
+                            <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_password_confirm" class="form-label fw-medium">Confirmar Senha</label>
+                            {{ form.password_confirm }}
+                            {% if form.password_confirm.errors %}
+                            <div class="text-danger small mt-1">{{ form.password_confirm.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
 
-                    <div class="d-grid gap-2 mt-4">
+                    <div class="d-grid mt-4">
                         <button type="submit" class="btn btn-primary btn-lg">
-                            Criar Acesso Master
+                            <i class="bi bi-check-circle me-2"></i>
+                            Criar Acesso e Iniciar
                         </button>
                     </div>
                 </form>
             </div>
         </div>
+        
+        <!-- Footer -->
+        <div class="text-center mt-4 text-muted small">
+            <i class="bi bi-lock me-1"></i>
+            Este usuário terá acesso total ao sistema
+        </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .setup-container {
+        width: 100%;
+        max-width: 540px;
+    }
+    
+    .setup-card {
+        width: 100%;
+    }
+    
+    .setup-logo {
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, var(--accent-gold) 0%, #b7791f 100%);
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: #fff;
+        box-shadow: 0 8px 24px rgba(214, 158, 46, 0.3);
+    }
+    
+    .setup-container .card {
+        border-radius: 16px;
+        overflow: hidden;
+    }
+    
+    .setup-container .card-header {
+        border-bottom: none;
+    }
+    
+    .setup-container .form-control {
+        padding: 0.65rem 1rem;
+        border-radius: 8px;
+    }
+    
+    .setup-container .form-control:focus {
+        box-shadow: 0 0 0 0.2rem rgba(49, 130, 206, 0.15);
+        border-color: var(--primary-light);
+    }
+    
+    .setup-container .btn-primary {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    
+    .setup-container .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(26, 58, 92, 0.4);
+    }
+</style>
 {% endblock %}

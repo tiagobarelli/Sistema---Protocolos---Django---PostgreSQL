@@ -3,43 +3,137 @@
 {% block title %}Login - Sistema Notarial{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
-    <div class="col-md-5 col-lg-4">
+<div class="login-container">
+    <div class="login-card">
+        <!-- Logo e Título -->
         <div class="text-center mb-4">
-            <h2 class="fw-bold text-primary">Sistema Notarial</h2>
-            <p class="text-muted">Acesso Restrito</p>
+            <div class="login-logo mb-3">
+                <i class="bi bi-journal-bookmark-fill"></i>
+            </div>
+            <h2 class="fw-bold" style="color: var(--primary-dark);">Sistema de Protocolos</h2>
+            <p class="text-muted mb-0">Tabelião de Itápolis</p>
         </div>
         
-        <div class="card card-shadow border-0">
-            <div class="card-body p-4">
+        <!-- Card de Login -->
+        <div class="card border-0 shadow-lg">
+            <div class="card-body p-4 p-md-5">
+                <h5 class="text-center text-muted mb-4">Acesso ao Sistema</h5>
+                
                 <form method="post">
                     {% csrf_token %}
                     
                     {% if form.errors %}
-                        <div class="alert alert-danger small">
-                            Usuário ou senha incorretos.
-                        </div>
+                    <div class="alert alert-danger d-flex align-items-center" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <span>Usuário ou senha incorretos.</span>
+                    </div>
                     {% endif %}
 
                     <div class="mb-3">
-                        <label class="form-label">Usuário</label>
-                        <input type="text" name="username" class="form-control" placeholder="Seu usuário" required autofocus>
+                        <label class="form-label fw-medium">Usuário</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="bi bi-person text-muted"></i>
+                            </span>
+                            <input type="text" 
+                                   name="username" 
+                                   class="form-control border-start-0 ps-0" 
+                                   placeholder="Digite seu usuário" 
+                                   required 
+                                   autofocus>
+                        </div>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label">Senha</label>
-                        <input type="password" name="password" class="form-control" placeholder="Sua senha" required>
+                        <label class="form-label fw-medium">Senha</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="bi bi-lock text-muted"></i>
+                            </span>
+                            <input type="password" 
+                                   name="password" 
+                                   class="form-control border-start-0 ps-0" 
+                                   placeholder="Digite sua senha" 
+                                   required>
+                        </div>
                     </div>
 
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Entrar</button>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>
+                            Entrar
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
-        <div class="text-center mt-3 text-muted small">
-            &copy; 2024 Sistema de Protocolos
+        
+        <!-- Footer -->
+        <div class="text-center mt-4 text-muted small">
+            <i class="bi bi-shield-lock me-1"></i>
+            Acesso restrito a usuários autorizados
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .login-container {
+        width: 100%;
+        max-width: 420px;
+    }
+    
+    .login-card {
+        width: 100%;
+    }
+    
+    .login-logo {
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: var(--accent-gold);
+        box-shadow: 0 8px 24px rgba(26, 58, 92, 0.3);
+    }
+    
+    .login-container .card {
+        border-radius: 16px;
+    }
+    
+    .login-container .form-control {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+    }
+    
+    .login-container .form-control:focus {
+        box-shadow: none;
+        border-color: var(--primary-light);
+    }
+    
+    .login-container .input-group-text {
+        border-color: #dee2e6;
+    }
+    
+    .login-container .input-group:focus-within .input-group-text {
+        border-color: var(--primary-light);
+    }
+    
+    .login-container .btn-primary {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    
+    .login-container .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(26, 58, 92, 0.4);
+    }
+</style>
 {% endblock %}
