@@ -17,6 +17,13 @@ urlpatterns = [
     path('usuarios/<int:pk>/editar/', views.user_update, name='user_update'),
     path('usuarios/<int:pk>/excluir/', views.user_delete, name='user_delete'),
     
+    # ========== CONFIGURAÇÕES ==========
+    path('configuracoes/', views.settings_view, name='settings_view'),
+    path('configuracoes/atos/novo/', views.tipo_ato_create, name='tipo_ato_create'),
+    path('configuracoes/atos/<int:pk>/editar/', views.tipo_ato_update, name='tipo_ato_update'),
+    path('configuracoes/atos/<int:pk>/excluir/', views.tipo_ato_delete, name='tipo_ato_delete'),
+    path('configuracoes/atos/<int:pk>/toggle/', views.tipo_ato_toggle, name='tipo_ato_toggle'),
+    
     # ========== CLIENTES (CRUD) ==========
     # path('clientes/', views.cliente_list, name='cliente_list'),
     # path('clientes/novo/', views.cliente_create, name='cliente_create'),

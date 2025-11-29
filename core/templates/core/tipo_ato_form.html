@@ -1,0 +1,161 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ title }} - Sistema de Protocolos{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1>
+        <i class="bi bi-{% if tipo_ato %}pencil-square{% else %}plus-circle{% endif %} me-2"></i>
+        {{ title }}
+    </h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Início</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'settings_view' %}?tab=atos">Configurações</a></li>
+            <li class="breadcrumb-item active">{{ title }}</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-6">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <div class="card">
+                <div class="card-header py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-text me-2"></i>
+                        Dados do Tipo de Ato
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="id_nome" class="form-label fw-medium">
+                            Nome do Tipo de Ato <span class="text-danger">*</span>
+                        </label>
+                        {{ form.nome }}
+                        {% if form.nome.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.nome.errors|join:", " }}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Ex: Escritura de Compra e Venda, Procuração, Testamento, etc.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_tempo_alerta_dias" class="form-label fw-medium">
+                            Tempo de Alerta (Dias)
+                        </label>
+                        {{ form.tempo_alerta_dias }}
+                        {% if form.tempo_alerta_dias.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.tempo_alerta_dias.errors|join:", " }}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">
+                            {{ form.tempo_alerta_dias.help_text }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-0">
+                        <div class="form-check form-switch">
+                            {{ form.ativo }}
+                            <label class="form-check-label fw-medium" for="id_ativo">
+                                Tipo de Ato Ativo
+                            </label>
+                        </div>
+                        <div class="form-text">
+                            Tipos de ato inativos não aparecem nas opções de criação de protocolo.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Erros Gerais do Form -->
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger mt-3">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                {{ form.non_field_errors|join:", " }}
+            </div>
+            {% endif %}
+
+            <!-- Botões de Ação -->
+            <div class="d-flex gap-2 justify-content-end mt-4">
+                <a href="{% url 'settings_view' %}?tab=atos" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg me-1"></i>
+                    Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i>
+                    {{ button_text }}
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Sidebar de Ajuda -->
+    <div class="col-12 col-lg-6">
+        <div class="card bg-light border-0">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-lightbulb me-1"></i>
+                    O que são Tipos de Ato?
+                </h6>
+                <hr>
+                <p class="small text-muted">
+                    Os tipos de ato definem as categorias de serviços oferecidos pelo cartório. 
+                    Cada protocolo criado será associado a um tipo de ato.
+                </p>
+                <p class="small text-muted mb-0">
+                    <strong>Exemplos comuns:</strong>
+                </p>
+                <ul class="small text-muted ps-3 mb-0">
+                    <li>Escritura de Compra e Venda</li>
+                    <li>Escritura de Doação</li>
+                    <li>Procuração Pública</li>
+                    <li>Testamento Público</li>
+                    <li>Inventário</li>
+                    <li>Ata Notarial</li>
+                    <li>Autenticação de Cópias</li>
+                    <li>Reconhecimento de Firma</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card bg-info-subtle border-0 mt-3">
+            <div class="card-body">
+                <h6 class="card-title text-info">
+                    <i class="bi bi-clock me-1"></i>
+                    Sobre o Tempo de Alerta
+                </h6>
+                <hr class="border-info">
+                <p class="small text-muted mb-0">
+                    O tempo de alerta define quantos dias após a criação do protocolo 
+                    o sistema irá notificar sobre pendências. Deixe em branco se não 
+                    desejar receber alertas automáticos para este tipo.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 0.2rem rgba(49, 130, 206, 0.15);
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--primary-light);
+        border-color: var(--primary-light);
+    }
+</style>
+{% endblock %}
+

@@ -1,5 +1,7 @@
+from datetime import timedelta
 from django import forms
 from django.contrib.auth import get_user_model
+from .models import Tabelionato, TipoAto
 
 User = get_user_model()
 
@@ -154,3 +156,104 @@ class UserForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+
+
+# ========== CONFIGURAÇÕES ==========
+
+class TabelionatoForm(forms.ModelForm):
+    """Formulário para dados do Tabelionato (Singleton)."""
+    
+    class Meta:
+        model = Tabelionato
+        fields = ['denominacao', 'cnpj', 'endereco', 'telefone', 'email', 'site']
+        labels = {
+            'denominacao': 'Denominação / Razão Social',
+            'cnpj': 'CNPJ',
+            'endereco': 'Endereço Completo',
+            'telefone': 'Telefone',
+            'email': 'E-mail',
+            'site': 'Website',
+        }
+        widgets = {
+            'denominacao': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ex: 1º Tabelionato de Notas de Itápolis'
+            }),
+            'cnpj': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '00.000.000/0000-00'
+            }),
+            'endereco': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Rua, número, bairro, cidade - UF'
+            }),
+            'telefone': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '(00) 0000-0000'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'contato@tabelionato.com.br'
+            }),
+            'site': forms.URLInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'https://www.exemplo.com.br'
+            }),
+        }
+
+
+class TipoAtoForm(forms.ModelForm):
+    """
+    Formulário para Tipos de Ato.
+    O campo tempo_alerta é convertido de dias (int) para timedelta.
+    """
+    
+    tempo_alerta_dias = forms.IntegerField(
+        label='Tempo de Alerta (Dias)',
+        required=False,
+        min_value=0,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Ex: 30',
+            'min': '0'
+        }),
+        help_text='Número de dias para o sistema alertar sobre este tipo de ato.'
+    )
+    
+    class Meta:
+        model = TipoAto
+        fields = ['nome', 'ativo']
+        labels = {
+            'nome': 'Nome do Tipo de Ato',
+            'ativo': 'Ativo',
+        }
+        widgets = {
+            'nome': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ex: Escritura de Compra e Venda'
+            }),
+            'ativo': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'role': 'switch'
+            }),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Se estamos editando, converte o timedelta para dias
+        if self.instance and self.instance.pk and self.instance.tempo_alerta:
+            self.fields['tempo_alerta_dias'].initial = self.instance.tempo_alerta.days
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        
+        # Converte dias para timedelta
+        dias = self.cleaned_data.get('tempo_alerta_dias')
+        if dias is not None and dias > 0:
+            instance.tempo_alerta = timedelta(days=dias)
+        else:
+            instance.tempo_alerta = None
+        
+        if commit:
+            instance.save()
+        return instance

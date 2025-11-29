@@ -1,0 +1,382 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Configurações - Sistema de Protocolos{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+        <h1><i class="bi bi-gear me-2"></i>Configurações do Sistema</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Início</a></li>
+                <li class="breadcrumb-item active">Configurações</li>
+            </ol>
+        </nav>
+    </div>
+    <a href="{% url 'admin:index' %}" target="_blank" class="btn btn-outline-secondary">
+        <i class="bi bi-gear-wide-connected me-1"></i>
+        Painel Django Admin
+    </a>
+</div>
+
+<!-- Navegação por Abas -->
+<div class="card">
+    <div class="card-header p-0 bg-transparent">
+        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab == 'tabelionato' %}active{% endif %}" 
+                        id="tabelionato-tab" 
+                        data-bs-toggle="tab" 
+                        data-bs-target="#tabelionato-pane" 
+                        type="button" 
+                        role="tab">
+                    <i class="bi bi-building me-1"></i>
+                    Dados do Cartório
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab == 'atos' %}active{% endif %}" 
+                        id="atos-tab" 
+                        data-bs-toggle="tab" 
+                        data-bs-target="#atos-pane" 
+                        type="button" 
+                        role="tab">
+                    <i class="bi bi-list-check me-1"></i>
+                    Tipos de Atos
+                </button>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="card-body">
+        <div class="tab-content">
+            <!-- ========== ABA 1: TABELIONATO ========== -->
+            <div class="tab-pane fade {% if active_tab == 'tabelionato' %}show active{% endif %}" 
+                 id="tabelionato-pane" 
+                 role="tabpanel">
+                
+                <div class="row">
+                    <div class="col-lg-8">
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            <div class="alert alert-info d-flex align-items-start mb-4">
+                                <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+                                <div class="small">
+                                    Configure as informações do seu cartório. Estes dados serão exibidos nos documentos e relatórios gerados pelo sistema.
+                                </div>
+                            </div>
+                            
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="id_denominacao" class="form-label fw-medium">
+                                        Denominação / Razão Social <span class="text-danger">*</span>
+                                    </label>
+                                    {{ tabelionato_form.denominacao }}
+                                    {% if tabelionato_form.denominacao.errors %}
+                                    <div class="text-danger small">{{ tabelionato_form.denominacao.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="id_cnpj" class="form-label fw-medium">
+                                        CNPJ <span class="text-danger">*</span>
+                                    </label>
+                                    {{ tabelionato_form.cnpj }}
+                                    {% if tabelionato_form.cnpj.errors %}
+                                    <div class="text-danger small">{{ tabelionato_form.cnpj.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="id_telefone" class="form-label fw-medium">
+                                        Telefone <span class="text-danger">*</span>
+                                    </label>
+                                    {{ tabelionato_form.telefone }}
+                                    {% if tabelionato_form.telefone.errors %}
+                                    <div class="text-danger small">{{ tabelionato_form.telefone.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label for="id_endereco" class="form-label fw-medium">
+                                        Endereço Completo <span class="text-danger">*</span>
+                                    </label>
+                                    {{ tabelionato_form.endereco }}
+                                    {% if tabelionato_form.endereco.errors %}
+                                    <div class="text-danger small">{{ tabelionato_form.endereco.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="id_email" class="form-label fw-medium">
+                                        E-mail <span class="text-danger">*</span>
+                                    </label>
+                                    {{ tabelionato_form.email }}
+                                    {% if tabelionato_form.email.errors %}
+                                    <div class="text-danger small">{{ tabelionato_form.email.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="id_site" class="form-label fw-medium">
+                                        Website
+                                    </label>
+                                    {{ tabelionato_form.site }}
+                                    {% if tabelionato_form.site.errors %}
+                                    <div class="text-danger small">{{ tabelionato_form.site.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 pt-3 border-top">
+                                <button type="submit" name="save_tabelionato" class="btn btn-primary">
+                                    <i class="bi bi-check-lg me-1"></i>
+                                    Salvar Dados do Cartório
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Sidebar de Info -->
+                    <div class="col-lg-4">
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="bi bi-lightbulb me-1"></i>
+                                    Informações
+                                </h6>
+                                <hr>
+                                <p class="small text-muted mb-2">
+                                    Os dados cadastrados aqui serão utilizados em:
+                                </p>
+                                <ul class="small text-muted ps-3 mb-0">
+                                    <li>Cabeçalho de documentos</li>
+                                    <li>Relatórios impressos</li>
+                                    <li>Comunicações COAF</li>
+                                    <li>Recibos e comprovantes</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        {% if tabelionato %}
+                        <div class="card bg-success-subtle border-0 mt-3">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center text-success">
+                                    <i class="bi bi-check-circle-fill me-2"></i>
+                                    <span class="small fw-medium">Cartório configurado</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="card bg-warning-subtle border-0 mt-3">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center text-warning">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                    <span class="small fw-medium">Dados ainda não configurados</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ========== ABA 2: TIPOS DE ATO ========== -->
+            <div class="tab-pane fade {% if active_tab == 'atos' %}show active{% endif %}" 
+                 id="atos-pane" 
+                 role="tabpanel">
+                
+                <!-- Cabeçalho da Aba -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <p class="text-muted mb-0">
+                            Gerencie os tipos de atos notariais disponíveis no sistema.
+                        </p>
+                    </div>
+                    <a href="{% url 'tipo_ato_create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i>
+                        Novo Tipo de Ato
+                    </a>
+                </div>
+                
+                <!-- Tabela de Tipos de Ato -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nome do Ato</th>
+                                <th class="text-center">Tempo de Alerta</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center" style="width: 180px;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tipo in tipos_ato %}
+                            <tr class="{% if not tipo.ativo %}table-secondary{% endif %}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-file-earmark-text me-2 text-muted"></i>
+                                        <strong>{{ tipo.nome }}</strong>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    {% if tipo.tempo_alerta %}
+                                    <span class="badge bg-info-subtle text-info">
+                                        <i class="bi bi-clock me-1"></i>
+                                        {{ tipo.tempo_alerta.days }} dias
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted small">Não definido</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if tipo.ativo %}
+                                    <span class="badge bg-success-subtle text-success">
+                                        <i class="bi bi-check-circle me-1"></i>Ativo
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary">
+                                        <i class="bi bi-x-circle me-1"></i>Inativo
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <!-- Botão Ativar/Desativar -->
+                                        <form action="{% url 'tipo_ato_toggle' tipo.pk %}" method="post" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" 
+                                                    class="btn btn-outline-{% if tipo.ativo %}warning{% else %}success{% endif %}" 
+                                                    title="{% if tipo.ativo %}Desativar{% else %}Ativar{% endif %}">
+                                                <i class="bi bi-{% if tipo.ativo %}pause{% else %}play{% endif %}-fill"></i>
+                                            </button>
+                                        </form>
+                                        
+                                        <!-- Botão Editar -->
+                                        <a href="{% url 'tipo_ato_update' tipo.pk %}" 
+                                           class="btn btn-outline-primary" 
+                                           title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        
+                                        <!-- Botão Excluir -->
+                                        <button type="button" 
+                                                class="btn btn-outline-danger" 
+                                                title="Excluir"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#deleteModal{{ tipo.pk }}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Modal de Exclusão -->
+                                    <div class="modal fade" id="deleteModal{{ tipo.pk }}" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header border-0">
+                                                    <h5 class="modal-title text-danger">
+                                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                                        Confirmar Exclusão
+                                                    </h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body text-start">
+                                                    <p>Tem certeza que deseja excluir o tipo de ato:</p>
+                                                    <div class="alert alert-light border">
+                                                        <strong>{{ tipo.nome }}</strong>
+                                                    </div>
+                                                    <p class="text-danger mb-0 small">
+                                                        <i class="bi bi-exclamation-circle me-1"></i>
+                                                        Atenção: Esta ação pode afetar protocolos existentes.
+                                                    </p>
+                                                </div>
+                                                <div class="modal-footer border-0">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                        Cancelar
+                                                    </button>
+                                                    <form action="{% url 'tipo_ato_delete' tipo.pk %}" method="post" class="d-inline">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-danger">
+                                                            <i class="bi bi-trash me-1"></i>Excluir
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5">
+                                    <i class="bi bi-inbox fs-1 text-muted"></i>
+                                    <p class="text-muted mt-2 mb-3">Nenhum tipo de ato cadastrado.</p>
+                                    <a href="{% url 'tipo_ato_create' %}" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-plus-lg me-1"></i>
+                                        Cadastrar Primeiro Tipo
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Resumo -->
+                {% if tipos_ato %}
+                <div class="mt-3 pt-3 border-top">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="small text-muted">Total</div>
+                            <div class="fw-bold">{{ tipos_ato|length }}</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="small text-muted">Ativos</div>
+                            <div class="fw-bold text-success">
+                                {% with ativos=tipos_ato|dictsort:"ativo"|last %}
+                                {{ tipos_ato|length }}
+                                {% endwith %}
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="small text-muted">Inativos</div>
+                            <div class="fw-bold text-secondary">0</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .nav-tabs .nav-link {
+        color: var(--text-muted);
+        border: none;
+        border-bottom: 2px solid transparent;
+        padding: 1rem 1.5rem;
+        font-weight: 500;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        border-color: transparent;
+        color: var(--primary-medium);
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: var(--primary-light);
+        border-color: var(--primary-light);
+        background: transparent;
+    }
+    
+    .table > :not(caption) > * > * {
+        padding: 1rem 0.75rem;
+    }
+</style>
+{% endblock %}
+

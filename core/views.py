@@ -7,8 +7,8 @@ from django.utils import timezone
 from django.core.paginator import Paginator
 from django.db.models import Q
 
-from .forms import SetupMasterForm, UserForm
-from .models import Protocolo, Cliente
+from .forms import SetupMasterForm, UserForm, TabelionatoForm, TipoAtoForm
+from .models import Protocolo, Cliente, Tabelionato, TipoAto
 
 User = get_user_model()
 
@@ -218,3 +218,126 @@ def user_delete(request, pk):
     
     # Se não for POST, redireciona para a lista
     return redirect('user_list')
+
+
+# ========== CONFIGURAÇÕES DO SISTEMA ==========
+
+@login_required
+@master_required
+def settings_view(request):
+    """
+    View principal de configurações com abas:
+    - Aba 1: Dados do Tabelionato (Singleton)
+    - Aba 2: Tipos de Atos
+    """
+    # Recupera ou cria instância do Tabelionato (Singleton)
+    tabelionato = Tabelionato.objects.first()
+    
+    # Determina qual aba está ativa
+    active_tab = request.GET.get('tab', 'tabelionato')
+    
+    # Formulário do Tabelionato
+    if request.method == 'POST' and 'save_tabelionato' in request.POST:
+        if tabelionato:
+            tabelionato_form = TabelionatoForm(request.POST, instance=tabelionato)
+        else:
+            tabelionato_form = TabelionatoForm(request.POST)
+        
+        if tabelionato_form.is_valid():
+            tabelionato_form.save()
+            messages.success(request, 'Dados do Tabelionato salvos com sucesso!')
+            return redirect('settings_view')
+    else:
+        if tabelionato:
+            tabelionato_form = TabelionatoForm(instance=tabelionato)
+        else:
+            tabelionato_form = TabelionatoForm()
+    
+    # Lista de Tipos de Ato
+    tipos_ato = TipoAto.objects.all().order_by('nome')
+    
+    context = {
+        'tabelionato_form': tabelionato_form,
+        'tabelionato': tabelionato,
+        'tipos_ato': tipos_ato,
+        'active_tab': active_tab,
+    }
+    
+    return render(request, 'core/settings.html', context)
+
+
+@login_required
+@master_required
+def tipo_ato_create(request):
+    """Cria um novo Tipo de Ato."""
+    if request.method == 'POST':
+        form = TipoAtoForm(request.POST)
+        if form.is_valid():
+            tipo_ato = form.save()
+            messages.success(request, f'Tipo de Ato "{tipo_ato.nome}" criado com sucesso!')
+            return redirect('settings_view')
+    else:
+        form = TipoAtoForm()
+    
+    context = {
+        'form': form,
+        'title': 'Novo Tipo de Ato',
+        'button_text': 'Criar',
+    }
+    
+    return render(request, 'core/tipo_ato_form.html', context)
+
+
+@login_required
+@master_required
+def tipo_ato_update(request, pk):
+    """Edita um Tipo de Ato existente."""
+    tipo_ato = get_object_or_404(TipoAto, pk=pk)
+    
+    if request.method == 'POST':
+        form = TipoAtoForm(request.POST, instance=tipo_ato)
+        if form.is_valid():
+            tipo_ato = form.save()
+            messages.success(request, f'Tipo de Ato "{tipo_ato.nome}" atualizado com sucesso!')
+            return redirect('settings_view')
+    else:
+        form = TipoAtoForm(instance=tipo_ato)
+    
+    context = {
+        'form': form,
+        'tipo_ato': tipo_ato,
+        'title': f'Editar: {tipo_ato.nome}',
+        'button_text': 'Salvar Alterações',
+    }
+    
+    return render(request, 'core/tipo_ato_form.html', context)
+
+
+@login_required
+@master_required
+def tipo_ato_delete(request, pk):
+    """Exclui um Tipo de Ato (exclusão física)."""
+    tipo_ato = get_object_or_404(TipoAto, pk=pk)
+    
+    if request.method == 'POST':
+        nome = tipo_ato.nome
+        tipo_ato.delete()
+        messages.success(request, f'Tipo de Ato "{nome}" excluído com sucesso!')
+        return redirect('settings_view')
+    
+    return redirect('settings_view')
+
+
+@login_required
+@master_required
+def tipo_ato_toggle(request, pk):
+    """Alterna o status ativo/inativo de um Tipo de Ato."""
+    tipo_ato = get_object_or_404(TipoAto, pk=pk)
+    
+    if request.method == 'POST':
+        tipo_ato.ativo = not tipo_ato.ativo
+        tipo_ato.save()
+        status = 'ativado' if tipo_ato.ativo else 'desativado'
+        messages.success(request, f'Tipo de Ato "{tipo_ato.nome}" {status} com sucesso!')
+    
+    return redirect('settings_view')
