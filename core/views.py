@@ -1,3 +1,5 @@
+import re
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, get_user_model
 from django.contrib.auth.views import LoginView
@@ -6,8 +8,18 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.db import transaction
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
 
-from .forms import SetupMasterForm, UserForm, TabelionatoForm, TipoAtoForm, ClienteForm
+from .forms import (
+    SetupMasterForm,
+    UserForm,
+    TabelionatoForm,
+    TipoAtoForm,
+    ClienteForm,
+    ProtocoloCertidaoForm,
+)
 from .models import Protocolo, Cliente, Tabelionato, TipoAto
 
 User = get_user_model()
@@ -423,3 +435,275 @@ def cliente_update(request, pk):
     }
     
     return render(request, 'core/cliente_form.html', context)
+
+
+# ========== API - BUSCA DE CLIENTE ==========
+
+@login_required
+@require_GET
+def api_buscar_cliente(request):
+    """
+    API para buscar cliente por CPF ou CNPJ.
+    Retorna: {found: bool, id: int|null, nome: str, tipo_pessoa: str}
+    """
+    documento = request.GET.get('documento', '').strip()
+    
+    # Remove pontuação
+    documento_limpo = re.sub(r'\D', '', documento)
+    
+    if not documento_limpo:
+        return JsonResponse({'found': False, 'id': None, 'nome': '', 'tipo_pessoa': ''})
+    
+    # Busca por CPF ou CNPJ
+    cliente = Cliente.objects.filter(
+        Q(cpf=documento_limpo) | Q(cnpj=documento_limpo)
+    ).first()
+    
+    if cliente:
+        return JsonResponse({
+            'found': True,
+            'id': cliente.id,
+            'nome': cliente.nome,
+            'tipo_pessoa': cliente.tipo_pessoa,
+        })
+    
+    return JsonResponse({'found': False, 'id': None, 'nome': '', 'tipo_pessoa': ''})
+
+
+# ========== PROTOCOLOS - CERTIDÃO ==========
+
+def _limpar_documento(valor):
+    """Remove pontuação de documento, mantendo apenas números."""
+    if valor:
+        return re.sub(r'\D', '', valor)
+    return None
+
+
+def _processar_pessoas_do_post(request, prefixo, apenas_cpf=False):
+    """
+    Processa os dados de clientes/advogados enviados via POST.
+    Retorna lista de objetos Cliente (criados ou encontrados).
+    
+    Parâmetros:
+    - prefixo: 'cliente' ou 'advogado'
+    - apenas_cpf: Se True, força tipo FISICA (para advogados)
+    
+    Espera campos no formato:
+    - {prefixo}_documento[]
+    - {prefixo}_nome[]
+    - {prefixo}_id[] (opcional, para clientes já existentes)
+    """
+    documentos = request.POST.getlist(f'{prefixo}_documento[]')
+    nomes = request.POST.getlist(f'{prefixo}_nome[]')
+    ids = request.POST.getlist(f'{prefixo}_id[]')
+    
+    pessoas = []
+    
+    for i, doc in enumerate(documentos):
+        doc_limpo = _limpar_documento(doc)
+        nome = nomes[i] if i < len(nomes) else ''
+        cliente_id = ids[i] if i < len(ids) else ''
+        
+        if not doc_limpo and not nome:
+            continue  # Linha vazia
+        
+        # Se tem ID, busca o cliente existente
+        if cliente_id:
+            try:
+                cliente = Cliente.objects.get(pk=int(cliente_id))
+                pessoas.append(cliente)
+                continue
+            except (Cliente.DoesNotExist, ValueError):
+                pass
+        
+        # Determina tipo de pessoa pelo tamanho do documento
+        # Se apenas_cpf=True (advogado), força pessoa física
+        if apenas_cpf or len(doc_limpo) == 11:
+            tipo_pessoa = Cliente.TipoPessoa.FISICA
+            cpf = doc_limpo[:11] if doc_limpo else None  # Garante máximo 11 dígitos
+            cnpj = None
+        elif len(doc_limpo) == 14:
+            tipo_pessoa = Cliente.TipoPessoa.JURIDICA
+            cpf = None
+            cnpj = doc_limpo
+        else:
+            # Documento inválido, tenta como CPF
+            tipo_pessoa = Cliente.TipoPessoa.FISICA
+            cpf = doc_limpo if doc_limpo else None
+            cnpj = None
+        
+        if not nome.strip():
+            continue  # Sem nome, não cria
+        
+        # Busca ou cria o cliente
+        if cpf:
+            cliente, created = Cliente.objects.get_or_create(
+                cpf=cpf,
+                defaults={'nome': nome.strip(), 'tipo_pessoa': tipo_pessoa}
+            )
+        elif cnpj:
+            cliente, created = Cliente.objects.get_or_create(
+                cnpj=cnpj,
+                defaults={'nome': nome.strip(), 'tipo_pessoa': tipo_pessoa}
+            )
+        else:
+            # Sem documento válido, cria novo apenas pelo nome (caso especial)
+            cliente = Cliente.objects.create(
+                nome=nome.strip(),
+                tipo_pessoa=Cliente.TipoPessoa.FISICA
+            )
+        
+        pessoas.append(cliente)
+    
+    return pessoas
+
+
+def _processar_lista_documentos(request):
+    """Processa a lista de documentos enviada via POST."""
+    documentos = request.POST.getlist('documento_item[]')
+    return [doc.strip() for doc in documentos if doc.strip()]
+
+
+def _gerar_numero_protocolo():
+    """Gera um número de protocolo único baseado no ano e sequência."""
+    from django.utils import timezone
+    ano = timezone.now().year
+    
+    # Busca o último protocolo do ano
+    ultimo = Protocolo.objects.filter(
+        numero_protocolo__startswith=f'CERT-{ano}-'
+    ).order_by('-numero_protocolo').first()
+    
+    if ultimo:
+        try:
+            ultimo_num = int(ultimo.numero_protocolo.split('-')[-1])
+            proximo = ultimo_num + 1
+        except (ValueError, IndexError):
+            proximo = 1
+    else:
+        proximo = 1
+    
+    return f'CERT-{ano}-{proximo:05d}'
+
+
+@login_required
+@transaction.atomic
+def protocolo_certidao_create(request):
+    """
+    Cria um novo Protocolo do tipo Certidão.
+    Processa clientes, advogados e documentos manualmente.
+    """
+    if request.method == 'POST':
+        form = ProtocoloCertidaoForm(request.POST)
+        
+        if form.is_valid():
+            # Salva o protocolo
+            protocolo = form.save(commit=False)
+            protocolo.tipo = Protocolo.TipoProtocolo.CERTIDAO
+            protocolo.criado_por = request.user
+            protocolo.responsavel = request.user
+            protocolo.numero_protocolo = _gerar_numero_protocolo()
+            
+            # Processa lista de documentos
+            protocolo.lista_documentos = _processar_lista_documentos(request)
+            
+            protocolo.save()
+            
+            # Processa clientes (solicitantes) - permite CPF ou CNPJ
+            clientes = _processar_pessoas_do_post(request, 'cliente', apenas_cpf=False)
+            if clientes:
+                protocolo.clientes.set(clientes)
+            
+            # Processa advogados (se houver) - apenas CPF (pessoa física)
+            tem_advogado = request.POST.get('tem_advogado') == 'on'
+            if tem_advogado:
+                advogados = _processar_pessoas_do_post(request, 'advogado', apenas_cpf=True)
+                if advogados:
+                    protocolo.advogados.set(advogados)
+            
+            messages.success(request, f'Protocolo {protocolo.numero_protocolo} criado com sucesso!')
+            return redirect('protocolo_certidao_update', pk=protocolo.pk)
+        else:
+            # Form inválido, recupera dados para repopular
+            pass
+    else:
+        form = ProtocoloCertidaoForm()
+    
+    context = {
+        'form': form,
+        'title': 'Novo Protocolo de Certidão',
+        'button_text': 'Salvar Protocolo',
+        'is_edit': False,
+        'clientes_data': [],
+        'advogados_data': [],
+        'documentos_data': [],
+        'has_advogados': False,
+    }
+    return render(request, 'core/protocolo_certidao_form.html', context)
+
+
+@login_required
+@transaction.atomic
+def protocolo_certidao_update(request, pk):
+    """
+    Edita um protocolo do tipo Certidão existente.
+    """
+    protocolo = get_object_or_404(
+        Protocolo,
+        pk=pk,
+        tipo=Protocolo.TipoProtocolo.CERTIDAO
+    )
+    
+    if request.method == 'POST':
+        form = ProtocoloCertidaoForm(request.POST, instance=protocolo)
+        
+        if form.is_valid():
+            # Salva o protocolo
+            protocolo = form.save(commit=False)
+            protocolo.tipo = Protocolo.TipoProtocolo.CERTIDAO
+            
+            # Processa lista de documentos
+            protocolo.lista_documentos = _processar_lista_documentos(request)
+            
+            protocolo.save()
+            
+            # Processa clientes (solicitantes) - permite CPF ou CNPJ
+            clientes = _processar_pessoas_do_post(request, 'cliente', apenas_cpf=False)
+            protocolo.clientes.set(clientes)
+            
+            # Processa advogados (se houver) - apenas CPF (pessoa física)
+            tem_advogado = request.POST.get('tem_advogado') == 'on'
+            if tem_advogado:
+                advogados = _processar_pessoas_do_post(request, 'advogado', apenas_cpf=True)
+                protocolo.advogados.set(advogados)
+            else:
+                protocolo.advogados.clear()
+            
+            messages.success(request, f'Protocolo {protocolo.numero_protocolo} atualizado com sucesso!')
+            return redirect('protocolo_certidao_update', pk=protocolo.pk)
+    else:
+        form = ProtocoloCertidaoForm(instance=protocolo)
+    
+    # Prepara dados para o template
+    clientes_data = [
+        {'id': c.id, 'documento': c.cpf or c.cnpj or '', 'nome': c.nome}
+        for c in protocolo.clientes.all()
+    ]
+    advogados_data = [
+        {'id': a.id, 'documento': a.cpf or a.cnpj or '', 'nome': a.nome}
+        for a in protocolo.advogados.all()
+    ]
+    documentos_data = protocolo.lista_documentos or []
+    
+    context = {
+        'form': form,
+        'title': f'Editar Certidão #{protocolo.numero_protocolo}',
+        'button_text': 'Atualizar Protocolo',
+        'is_edit': True,
+        'protocolo': protocolo,
+        'clientes_data': json.dumps(clientes_data),
+        'advogados_data': json.dumps(advogados_data),
+        'documentos_data': json.dumps(documentos_data),
+        'has_advogados': protocolo.advogados.exists(),
+    }
+    return render(request, 'core/protocolo_certidao_form.html', context)

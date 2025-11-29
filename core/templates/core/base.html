@@ -362,7 +362,7 @@
                 <span>Novo Ato Notarial</span>
             </a>
             
-            <a href="#" class="nav-link">
+            <a href="{% url 'protocolo_certidao_create' %}" class="nav-link {% if request.resolver_match.url_name == 'protocolo_certidao_create' %}active{% endif %}">
                 <i class="bi bi-file-earmark-text"></i>
                 <span>Nova Certidão</span>
             </a>

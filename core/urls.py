@@ -28,14 +28,17 @@ urlpatterns = [
     path('clientes/', views.cliente_list, name='cliente_list'),
     path('clientes/novo/', views.cliente_create, name='cliente_create'),
     path('clientes/<int:pk>/editar/', views.cliente_update, name='cliente_update'),
+
+    # ========== PROTOCOLOS - CERTIDÃO ==========
+    path('protocolos/certidao/novo/', views.protocolo_certidao_create, name='protocolo_certidao_create'),
+    path('protocolos/certidao/<int:pk>/editar/', views.protocolo_certidao_update, name='protocolo_certidao_update'),
     
     # ========== PROTOCOLOS ==========
     # path('protocolos/', views.protocolo_list, name='protocolo_list'),
     # path('protocolos/ato/novo/', views.protocolo_create_ato, name='protocolo_create_ato'),
-    # path('protocolos/certidao/novo/', views.protocolo_create_certidao, name='protocolo_create_certidao'),
     # path('protocolos/<int:pk>/', views.protocolo_detail, name='protocolo_detail'),
     
-    # ========== API (para Vue.js) ==========
-    # path('api/clientes/', views.api_clientes, name='api_clientes'),
+    # ========== API ==========
+    path('api/buscar-cliente/', views.api_buscar_cliente, name='api_buscar_cliente'),
 ]
 

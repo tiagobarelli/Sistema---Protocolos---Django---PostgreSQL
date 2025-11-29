@@ -1,7 +1,7 @@
 from datetime import timedelta
 from django import forms
 from django.contrib.auth import get_user_model
-from .models import Tabelionato, TipoAto, Cliente
+from .models import Tabelionato, TipoAto, Cliente, Protocolo
 
 User = get_user_model()
 
@@ -358,3 +358,63 @@ class ClienteForm(forms.ModelForm):
             cleaned_data['cpf'] = None
         
         return cleaned_data
+
+
+class ProtocoloCertidaoForm(forms.ModelForm):
+    """
+    Formulário para criação/edição de Protocolos do tipo CERTIDÃO.
+    
+    NOTA: Os campos 'clientes', 'advogados' e 'lista_documentos' são 
+    manipulados manualmente via JavaScript e processados na View,
+    não fazem parte deste form.
+    """
+
+    class Meta:
+        model = Protocolo
+        fields = [
+            'tipo_ato',
+            'data_agendamento',
+            'horario_agendamento',
+            'deposito_previo',
+            'observacoes',
+        ]
+        labels = {
+            'tipo_ato': 'Tipo de Certidão',
+            'data_agendamento': 'Data de Entrega',
+            'horario_agendamento': 'Horário',
+            'deposito_previo': 'Depósito Prévio (R$)',
+            'observacoes': 'Observações',
+        }
+        widgets = {
+            'tipo_ato': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'data_agendamento': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'horario_agendamento': forms.TimeInput(attrs={
+                'class': 'form-control',
+                'type': 'time'
+            }),
+            'deposito_previo': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'placeholder': '0,00'
+            }),
+            'observacoes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Observações adicionais sobre o pedido de certidão...'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtra apenas tipos de ato ativos
+        self.fields['tipo_ato'].queryset = TipoAto.objects.filter(ativo=True)
+        # Campos opcionais
+        self.fields['data_agendamento'].required = False
+        self.fields['horario_agendamento'].required = False
+        self.fields['observacoes'].required = False
