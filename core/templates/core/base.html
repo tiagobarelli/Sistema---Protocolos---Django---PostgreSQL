@@ -3,31 +3,456 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Sistema Notarial{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>{% block title %}Sistema de Protocolos{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts - Fonte profissional -->
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { background-color: #f8f9fa; }
-        .card-shadow { box_shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); }
+        :root {
+            --sidebar-width: 280px;
+            --header-height: 60px;
+            --primary-dark: #1a3a5c;
+            --primary-medium: #2c5282;
+            --primary-light: #3182ce;
+            --accent-gold: #d69e2e;
+            --bg-light: #f7fafc;
+            --text-muted: #718096;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            overflow-x: hidden;
+        }
+
+        /* ========== HEADER ========== */
+        .app-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
+            z-index: 1030;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .app-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .app-header .brand-icon {
+            width: 38px;
+            height: 38px;
+            background: var(--accent-gold);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: var(--primary-dark);
+        }
+
+        .app-header .brand-text {
+            font-weight: 600;
+            font-size: 1.1rem;
+            letter-spacing: -0.3px;
+        }
+
+        .app-header .brand-text small {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 400;
+            opacity: 0.85;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .app-header .user-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .app-header .user-info {
+            text-align: right;
+            color: #fff;
+        }
+
+        .app-header .user-info .user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .app-header .user-info .user-role {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .app-header .btn-logout {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 0.4rem 0.85rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .app-header .btn-logout:hover {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+
+        /* ========== SIDEBAR ========== */
+        .app-sidebar {
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            width: var(--sidebar-width);
+            height: calc(100vh - var(--header-height));
+            background: #fff;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            z-index: 1020;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-section-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            padding: 1rem 1.25rem 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .sidebar-nav .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.7rem 1.25rem;
+            color: #4a5568;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-left: 3px solid transparent;
+            transition: all 0.15s ease;
+        }
+
+        .sidebar-nav .nav-link:hover {
+            background: var(--bg-light);
+            color: var(--primary-medium);
+        }
+
+        .sidebar-nav .nav-link.active {
+            background: linear-gradient(90deg, rgba(49, 130, 206, 0.1) 0%, transparent 100%);
+            color: var(--primary-light);
+            border-left-color: var(--primary-light);
+        }
+
+        .sidebar-nav .nav-link i {
+            font-size: 1.1rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Submenu colapsável */
+        .nav-collapse-btn {
+            justify-content: space-between;
+        }
+
+        .nav-collapse-btn::after {
+            content: '\F282';
+            font-family: 'bootstrap-icons';
+            font-size: 0.75rem;
+            transition: transform 0.2s;
+        }
+
+        .nav-collapse-btn:not(.collapsed)::after {
+            transform: rotate(180deg);
+        }
+
+        .nav-submenu {
+            background: #f8fafc;
+            border-left: 3px solid var(--border-color);
+            margin-left: 1.25rem;
+        }
+
+        .nav-submenu .nav-link {
+            padding: 0.55rem 1rem 0.55rem 1.5rem;
+            font-size: 0.85rem;
+            border-left: none;
+        }
+
+        .nav-submenu .nav-link i {
+            font-size: 0.5rem;
+        }
+
+        /* ========== MAIN CONTENT ========== */
+        .app-main {
+            margin-left: var(--sidebar-width);
+            margin-top: var(--header-height);
+            min-height: calc(100vh - var(--header-height));
+            padding: 1.5rem;
+        }
+
+        /* Área para Vue.js */
+        #app {
+            min-height: 100%;
+        }
+
+        /* ========== ALERTS/MESSAGES ========== */
+        .app-alerts {
+            margin-bottom: 1rem;
+        }
+
+        /* ========== CARDS ========== */
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+        }
+
+        /* ========== PAGE HEADER ========== */
+        .page-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin: 0;
+        }
+
+        .page-header .breadcrumb {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            font-size: 0.85rem;
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 991.98px) {
+            .app-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .app-sidebar.show {
+                transform: translateX(0);
+            }
+
+            .app-main {
+                margin-left: 0;
+            }
+
+            .sidebar-toggle {
+                display: block !important;
+            }
+        }
+
+        .sidebar-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            padding: 0;
+            margin-right: 1rem;
+        }
+
+        /* Status badges */
+        .badge-status-em-andamento { background: #3182ce; }
+        .badge-status-escritura-finalizada { background: #38a169; }
+        .badge-status-concluido { background: #718096; }
+        .badge-status-cancelado { background: #e53e3e; }
+
+        {% block extra_css %}{% endblock %}
     </style>
 </head>
 <body>
-
-    <div class="container mt-3">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <!-- ========== HEADER ========== -->
+    <header class="app-header">
+        <div class="d-flex align-items-center">
+            <button class="sidebar-toggle" type="button" onclick="document.querySelector('.app-sidebar').classList.toggle('show')">
+                <i class="bi bi-list"></i>
+            </button>
+            <a href="{% url 'home' %}" class="brand">
+                <div class="brand-icon">
+                    <i class="bi bi-journal-bookmark-fill"></i>
                 </div>
-            {% endfor %}
-        {% endif %}
-    </div>
+                <div class="brand-text">
+                    Sistema de Protocolos
+                    <small>Tabelião de Itápolis</small>
+                </div>
+            </a>
+        </div>
 
-    <main class="container">
-        {% block content %}
-        {% endblock %}
+        <div class="user-section">
+            <div class="user-info d-none d-sm-block">
+                <div class="user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+                <div class="user-role">{{ request.user.get_role_display }}</div>
+            </div>
+            <form action="{% url 'logout' %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-logout">
+                    <i class="bi bi-box-arrow-right me-1"></i>
+                    <span class="d-none d-md-inline">Sair</span>
+                </button>
+            </form>
+        </div>
+    </header>
+
+    <!-- ========== SIDEBAR ========== -->
+    <aside class="app-sidebar">
+        <nav class="sidebar-nav">
+            <!-- Seção Principal -->
+            <div class="nav-section-title">Menu Principal</div>
+            
+            <a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                <i class="bi bi-house-door"></i>
+                <span>Início</span>
+            </a>
+
+            <!-- Seção Protocolos -->
+            <div class="nav-section-title">Protocolos</div>
+            
+            <a href="#" class="nav-link">
+                <i class="bi bi-file-earmark-plus"></i>
+                <span>Novo Ato Notarial</span>
+            </a>
+            
+            <a href="#" class="nav-link">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>Nova Certidão</span>
+            </a>
+
+            <!-- Gestão de Protocolos (Colapsável) -->
+            <a href="#gestaoSubmenu" 
+               class="nav-link nav-collapse-btn collapsed" 
+               data-bs-toggle="collapse" 
+               role="button" 
+               aria-expanded="false">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-folder2-open"></i>
+                    <span>Gestão de Protocolos</span>
+                </div>
+            </a>
+            
+            <div class="collapse nav-submenu" id="gestaoSubmenu">
+                <a href="#" class="nav-link">
+                    <i class="bi bi-circle-fill text-primary"></i>
+                    <span>Em Andamento</span>
+                </a>
+                <a href="#" class="nav-link">
+                    <i class="bi bi-circle-fill text-success"></i>
+                    <span>Atos Escriturados</span>
+                </a>
+                <a href="#" class="nav-link">
+                    <i class="bi bi-circle-fill text-secondary"></i>
+                    <span>Concluídos</span>
+                </a>
+                <a href="#" class="nav-link">
+                    <i class="bi bi-circle-fill text-danger"></i>
+                    <span>Cancelados</span>
+                </a>
+            </div>
+
+            <!-- Seção Cadastros -->
+            <div class="nav-section-title">Cadastros</div>
+            
+            <a href="#" class="nav-link">
+                <i class="bi bi-people"></i>
+                <span>Clientes</span>
+            </a>
+            
+            <a href="#" class="nav-link">
+                <i class="bi bi-calendar3"></i>
+                <span>Agenda</span>
+            </a>
+
+            <!-- Seção Relatórios -->
+            <div class="nav-section-title">Análises</div>
+            
+            <a href="#" class="nav-link">
+                <i class="bi bi-bar-chart-line"></i>
+                <span>Relatórios</span>
+            </a>
+
+            <!-- Seção Administração (Apenas MASTER) -->
+            {% if request.user.role == 'MASTER' %}
+            <div class="nav-section-title">Administração</div>
+            
+            <a href="#" class="nav-link">
+                <i class="bi bi-person-gear"></i>
+                <span>Usuários</span>
+            </a>
+            
+            <a href="{% url 'admin:index' %}" class="nav-link" target="_blank">
+                <i class="bi bi-gear"></i>
+                <span>Configurações</span>
+            </a>
+            {% endif %}
+
+        </nav>
+    </aside>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <main class="app-main">
+        <!-- Alertas/Mensagens do Django -->
+        {% if messages %}
+        <div class="app-alerts">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                <i class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Container para Vue.js (futuro) -->
+        <div id="app">
+            {% block content %}
+            {% endblock %}
+        </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Vue.js 3 (CDN - para uso futuro) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

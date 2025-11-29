@@ -1,0 +1,226 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Início - Sistema de Protocolos{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1>Bem-vindo, {{ request.user.first_name|default:request.user.username }}!</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item active">Início</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="text-muted">
+        <i class="bi bi-calendar3 me-1"></i>
+        {{ today|date:"l, d \d\e F \d\e Y" }}
+    </div>
+</div>
+
+<!-- Cards de Resumo -->
+<div class="row g-4 mb-4">
+    <!-- Card: Protocolos em Andamento -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted mb-1 small text-uppercase fw-semibold">Em Andamento</p>
+                        <h2 class="mb-0 fw-bold">{{ stats.em_andamento|default:0 }}</h2>
+                    </div>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 56px; height: 56px; background: rgba(49, 130, 206, 0.1);">
+                        <i class="bi bi-hourglass-split fs-4 text-primary"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-top">
+                    <a href="#" class="text-decoration-none small">
+                        Ver todos <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card: Escrituras Finalizadas -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted mb-1 small text-uppercase fw-semibold">Escriturados</p>
+                        <h2 class="mb-0 fw-bold">{{ stats.escritura_finalizada|default:0 }}</h2>
+                    </div>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 56px; height: 56px; background: rgba(56, 161, 105, 0.1);">
+                        <i class="bi bi-check2-circle fs-4 text-success"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-top">
+                    <a href="#" class="text-decoration-none small">
+                        Ver todos <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card: Concluídos -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted mb-1 small text-uppercase fw-semibold">Concluídos</p>
+                        <h2 class="mb-0 fw-bold">{{ stats.concluido|default:0 }}</h2>
+                    </div>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 56px; height: 56px; background: rgba(113, 128, 150, 0.1);">
+                        <i class="bi bi-archive fs-4 text-secondary"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-top">
+                    <a href="#" class="text-decoration-none small">
+                        Ver todos <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card: Clientes Cadastrados -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted mb-1 small text-uppercase fw-semibold">Clientes</p>
+                        <h2 class="mb-0 fw-bold">{{ stats.clientes|default:0 }}</h2>
+                    </div>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 56px; height: 56px; background: rgba(214, 158, 46, 0.1);">
+                        <i class="bi bi-people fs-4" style="color: #d69e2e;"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-top">
+                    <a href="#" class="text-decoration-none small">
+                        Gerenciar <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Seção Principal -->
+<div class="row g-4">
+    <!-- Ações Rápidas -->
+    <div class="col-12 col-lg-8">
+        <div class="card">
+            <div class="card-header py-3">
+                <h5 class="mb-0"><i class="bi bi-lightning-charge me-2"></i>Ações Rápidas</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <a href="#" class="btn btn-outline-primary w-100 py-3 d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-file-earmark-plus fs-5"></i>
+                            <span>Novo Protocolo de Ato</span>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="#" class="btn btn-outline-secondary w-100 py-3 d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-file-earmark-text fs-5"></i>
+                            <span>Nova Certidão</span>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="#" class="btn btn-outline-success w-100 py-3 d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-person-plus fs-5"></i>
+                            <span>Cadastrar Cliente</span>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="#" class="btn btn-outline-info w-100 py-3 d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-search fs-5"></i>
+                            <span>Buscar Protocolo</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Próximos Agendamentos -->
+    <div class="col-12 col-lg-4">
+        <div class="card h-100">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-calendar-event me-2"></i>Agenda do Dia</h5>
+                <a href="#" class="btn btn-sm btn-outline-primary">Ver Todos</a>
+            </div>
+            <div class="card-body">
+                {% if agendamentos %}
+                    <ul class="list-group list-group-flush">
+                        {% for item in agendamentos %}
+                        <li class="list-group-item px-0">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <strong>{{ item.horario_agendamento|time:"H:i" }}</strong>
+                                    <span class="text-muted">- {{ item.numero_protocolo }}</span>
+                                </div>
+                                <span class="badge bg-primary">{{ item.tipo_ato }}</span>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-calendar-x fs-1 text-muted"></i>
+                        <p class="text-muted mt-2 mb-0">Nenhum agendamento para hoje</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Card de Boas-Vindas (para novos usuários ou sistema vazio) -->
+{% if not stats.em_andamento and not stats.concluido %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0" style="background: linear-gradient(135deg, #1a3a5c 0%, #2c5282 100%);">
+            <div class="card-body text-white p-5">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h3 class="fw-bold mb-3">
+                            <i class="bi bi-rocket-takeoff me-2"></i>
+                            Comece a usar o Sistema de Protocolos
+                        </h3>
+                        <p class="mb-4 opacity-75">
+                            O sistema está pronto para uso! Selecione uma das opções abaixo para começar 
+                            a cadastrar seus protocolos ou utilize o menu lateral para navegar.
+                        </p>
+                        <div class="d-flex gap-3 flex-wrap">
+                            <a href="#" class="btn btn-warning px-4">
+                                <i class="bi bi-file-earmark-plus me-2"></i>
+                                Criar Primeiro Protocolo
+                            </a>
+                            <a href="#" class="btn btn-outline-light px-4">
+                                <i class="bi bi-person-plus me-2"></i>
+                                Cadastrar Cliente
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 d-none d-lg-block text-center">
+                        <i class="bi bi-journal-bookmark" style="font-size: 8rem; opacity: 0.2;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
