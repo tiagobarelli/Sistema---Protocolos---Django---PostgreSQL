@@ -88,3 +88,4 @@ def format_documento(value, tipo):
         return format_cnpj(value)
     return value
 
+
