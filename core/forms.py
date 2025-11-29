@@ -375,6 +375,7 @@ class ProtocoloCertidaoForm(forms.ModelForm):
             'tipo_ato',
             'data_agendamento',
             'horario_agendamento',
+            'responsavel',
             'deposito_previo',
             'observacoes',
         ]
@@ -382,6 +383,7 @@ class ProtocoloCertidaoForm(forms.ModelForm):
             'tipo_ato': 'Tipo de Certidão',
             'data_agendamento': 'Data de Entrega',
             'horario_agendamento': 'Horário',
+            'responsavel': 'Responsável pelo Protocolo',
             'deposito_previo': 'Depósito Prévio (R$)',
             'observacoes': 'Observações',
         }
@@ -397,6 +399,9 @@ class ProtocoloCertidaoForm(forms.ModelForm):
                 'class': 'form-control',
                 'type': 'time'
             }),
+            'responsavel': forms.Select(attrs={
+                'class': 'form-select'
+            }),
             'deposito_previo': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
@@ -411,9 +416,36 @@ class ProtocoloCertidaoForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        # Extrai o user do kwargs se fornecido (para definir valor inicial)
+        self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        
         # Filtra apenas tipos de ato ativos
         self.fields['tipo_ato'].queryset = TipoAto.objects.filter(ativo=True)
+        
+        # Configura o campo responsavel com queryset de usuários ativos
+        # Usa label_from_instance para exibir apenas o nome, sem o role
+        class ResponsavelChoiceField(forms.ModelChoiceField):
+            def label_from_instance(self, obj):
+                """Retorna apenas o nome completo ou username, sem o role."""
+                if obj.get_full_name():
+                    return obj.get_full_name()
+                return obj.username
+        
+        self.fields['responsavel'] = ResponsavelChoiceField(
+            queryset=User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username'),
+            widget=forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            label='Responsável pelo Protocolo',
+            required=True,
+            empty_label='Selecione o responsável...'
+        )
+        
+        # Define valor inicial como o usuário atual na criação
+        if self.user and not self.instance.pk:
+            self.fields['responsavel'].initial = self.user
+        
         # Campos opcionais
         self.fields['data_agendamento'].required = False
         self.fields['horario_agendamento'].required = False

@@ -604,14 +604,14 @@ def protocolo_certidao_create(request):
     Processa clientes, advogados e documentos manualmente.
     """
     if request.method == 'POST':
-        form = ProtocoloCertidaoForm(request.POST)
+        form = ProtocoloCertidaoForm(request.POST, user=request.user)
         
         if form.is_valid():
             # Salva o protocolo (numero_protocolo é gerado automaticamente no model)
             protocolo = form.save(commit=False)
             protocolo.tipo = Protocolo.TipoProtocolo.CERTIDAO
             protocolo.criado_por = request.user
-            protocolo.responsavel = request.user
+            # responsavel já vem do form
             
             # Processa lista de documentos
             protocolo.lista_documentos = _processar_lista_documentos(request)
@@ -631,22 +631,67 @@ def protocolo_certidao_create(request):
                     protocolo.advogados.set(advogados)
             
             messages.success(request, f'Protocolo {protocolo.numero_protocolo} criado com sucesso!')
-            return redirect('protocolo_certidao_update', pk=protocolo.pk)
+            
+            # Recarrega o protocolo para garantir dados atualizados
+            protocolo.refresh_from_db()
+            
+            # Prepara dados para o template
+            clientes_data = [
+                {
+                    'id': c.id, 
+                    'documento': c.cpf or c.cnpj or '', 
+                    'nome': c.nome,
+                    'telefone': c.telefone or '',
+                    'email': c.email or '',
+                    'endereco': c.endereco or '',
+                }
+                for c in protocolo.clientes.all()
+            ]
+            advogados_data = [
+                {
+                    'id': a.id, 
+                    'documento': a.cpf or a.cnpj or '', 
+                    'nome': a.nome,
+                    'telefone': a.telefone or '',
+                    'email': a.email or '',
+                    'endereco': a.endereco or '',
+                }
+                for a in protocolo.advogados.all()
+            ]
+            documentos_data = protocolo.lista_documentos or []
+            
+            # Recria o form com a instância salva para exibir os dados
+            form = ProtocoloCertidaoForm(instance=protocolo, user=request.user)
+            
+            context = {
+                'form': form,
+                'title': f'Certidão #{protocolo.numero_protocolo}',
+                'button_text': 'Salvar Protocolo',
+                'is_edit': True,
+                'protocolo': protocolo,
+                'clientes_data': json.dumps(clientes_data),
+                'advogados_data': json.dumps(advogados_data),
+                'documentos_data': json.dumps(documentos_data),
+                'has_advogados': protocolo.advogados.exists(),
+                'success': True,  # Indica que o protocolo foi salvo com sucesso
+            }
+            return render(request, 'core/protocolo_certidao_form.html', context)
         else:
             # Form inválido, recupera dados para repopular
             pass
     else:
-        form = ProtocoloCertidaoForm()
+        form = ProtocoloCertidaoForm(user=request.user)
     
     context = {
         'form': form,
         'title': 'Novo Protocolo de Certidão',
         'button_text': 'Salvar Protocolo',
         'is_edit': False,
-        'clientes_data': [],
-        'advogados_data': [],
-        'documentos_data': [],
+        'clientes_data': json.dumps([]),
+        'advogados_data': json.dumps([]),
+        'documentos_data': json.dumps([]),
         'has_advogados': False,
+        'success': False,
     }
     return render(request, 'core/protocolo_certidao_form.html', context)
 
@@ -663,8 +708,10 @@ def protocolo_certidao_update(request, pk):
         tipo=Protocolo.TipoProtocolo.CERTIDAO
     )
     
+    success = False
+    
     if request.method == 'POST':
-        form = ProtocoloCertidaoForm(request.POST, instance=protocolo)
+        form = ProtocoloCertidaoForm(request.POST, instance=protocolo, user=request.user)
         
         if form.is_valid():
             # Salva o protocolo
@@ -689,9 +736,17 @@ def protocolo_certidao_update(request, pk):
                 protocolo.advogados.clear()
             
             messages.success(request, f'Protocolo {protocolo.numero_protocolo} atualizado com sucesso!')
-            return redirect('protocolo_certidao_update', pk=protocolo.pk)
+            
+            # Recarrega o protocolo para garantir dados atualizados
+            protocolo.refresh_from_db()
+            
+            # Recria o form com a instância salva para exibir os dados
+            form = ProtocoloCertidaoForm(instance=protocolo, user=request.user)
+            
+            # Marca como sucesso
+            success = True
     else:
-        form = ProtocoloCertidaoForm(instance=protocolo)
+        form = ProtocoloCertidaoForm(instance=protocolo, user=request.user)
     
     # Prepara dados para o template (incluindo dados completos para edição)
     clientes_data = [
@@ -720,7 +775,7 @@ def protocolo_certidao_update(request, pk):
     
     context = {
         'form': form,
-        'title': f'Editar Certidão #{protocolo.numero_protocolo}',
+        'title': f'Certidão #{protocolo.numero_protocolo}',
         'button_text': 'Atualizar Protocolo',
         'is_edit': True,
         'protocolo': protocolo,
@@ -728,5 +783,6 @@ def protocolo_certidao_update(request, pk):
         'advogados_data': json.dumps(advogados_data),
         'documentos_data': json.dumps(documentos_data),
         'has_advogados': protocolo.advogados.exists(),
+        'success': success,
     }
     return render(request, 'core/protocolo_certidao_form.html', context)

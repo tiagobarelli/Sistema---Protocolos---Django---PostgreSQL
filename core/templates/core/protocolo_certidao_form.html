@@ -24,6 +24,17 @@
 
 <form method="post" id="formProtocolo" novalidate>
     {% csrf_token %}
+    {% if success %}
+    <fieldset disabled>
+    {% endif %}
+
+    {% if success %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <strong>Protocolo salvo com sucesso!</strong> O protocolo {{ protocolo.numero_protocolo }} foi registrado no sistema.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
 
     {% if form.non_field_errors %}
     <div class="alert alert-danger">
@@ -43,7 +54,7 @@
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-12">
+                        <div class="col-md-4">
                             <label class="form-label fw-medium" for="id_tipo_ato">
                                 Tipo de Certidão <span class="text-danger">*</span>
                             </label>
@@ -52,17 +63,32 @@
                             <div class="invalid-feedback d-block">{{ form.tipo_ato.errors|join:', ' }}</div>
                             {% endif %}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-medium" for="id_data_agendamento">
                                 Data de Entrega
                             </label>
                             {{ form.data_agendamento }}
+                            {% if form.data_agendamento.errors %}
+                            <div class="invalid-feedback d-block">{{ form.data_agendamento.errors|join:', ' }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium" for="id_responsavel">
+                                Responsável pelo Protocolo <span class="text-danger">*</span>
+                            </label>
+                            {{ form.responsavel }}
+                            {% if form.responsavel.errors %}
+                            <div class="invalid-feedback d-block">{{ form.responsavel.errors|join:', ' }}</div>
+                            {% endif %}
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium" for="id_horario_agendamento">
                                 Horário
                             </label>
                             {{ form.horario_agendamento }}
+                            {% if form.horario_agendamento.errors %}
+                            <div class="invalid-feedback d-block">{{ form.horario_agendamento.errors|join:', ' }}</div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -72,9 +98,11 @@
             <div class="card mb-4">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-people me-2"></i>Solicitantes</h5>
+                    {% if not success %}
                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="adicionarPessoa('cliente')">
                         <i class="bi bi-plus-lg me-1"></i>Adicionar Solicitante
                     </button>
+                    {% endif %}
                 </div>
                 <div class="card-body">
                     <div id="listaClientes">
@@ -103,11 +131,13 @@
                 </div>
                 <div id="advogados_container" style="{% if not has_advogados %}display: none;{% endif %}">
                     <div class="card-body">
+                        {% if not success %}
                         <div class="d-flex justify-content-end mb-3">
                             <button type="button" class="btn btn-sm btn-outline-primary" onclick="adicionarPessoa('advogado')">
                                 <i class="bi bi-plus-lg me-1"></i>Adicionar Advogado
                             </button>
                         </div>
+                        {% endif %}
                         <div id="listaAdvogados">
                             <!-- Cards de advogados serão adicionados via JS -->
                         </div>
@@ -123,9 +153,11 @@
             <div class="card mb-4">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-file-earmark-check me-2"></i>Documentos Solicitados</h5>
+                    {% if not success %}
                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="adicionarDocumento()">
                         <i class="bi bi-plus-lg me-1"></i>Adicionar
                     </button>
+                    {% endif %}
                 </div>
                 <div class="card-body" id="listaDocumentos">
                     <!-- Itens serão adicionados via JS -->
@@ -198,20 +230,52 @@
         </div>
     </div>
 
+    {% if success %}
+    </fieldset>
+    {% endif %}
+
     <!-- Botões de Ação -->
     <div class="d-flex justify-content-end gap-2 mt-4 mb-5">
-        <a href="{% url 'home' %}" class="btn btn-outline-secondary">
-            <i class="bi bi-x-lg me-1"></i>Cancelar
-        </a>
-        <button type="submit" class="btn btn-primary btn-lg">
-            <i class="bi bi-check-lg me-1"></i>{{ button_text }}
-        </button>
+        {% if success %}
+            <!-- Botões após salvamento bem-sucedido -->
+            <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-lg">
+                <i class="bi bi-house me-1"></i>Home
+            </a>
+            <button type="button" class="btn btn-primary btn-lg" onclick="window.print()">
+                <i class="bi bi-printer me-1"></i>Imprimir
+            </button>
+        {% else %}
+            <!-- Botões no fluxo normal/edição -->
+            <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg me-1"></i>Cancelar
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-check-lg me-1"></i>{{ button_text }}
+            </button>
+        {% endif %}
     </div>
 </form>
 {% endblock %}
 
 {% block extra_css %}
 <style>
+    /* Estilos para campos desabilitados quando protocolo foi salvo */
+    fieldset:disabled {
+        opacity: 0.85;
+        pointer-events: none;
+    }
+    
+    fieldset:disabled .form-control,
+    fieldset:disabled .form-select,
+    fieldset:disabled .btn:not(.btn-close) {
+        cursor: not-allowed;
+        background-color: #f8f9fa;
+    }
+    
+    fieldset:disabled .pessoa-card {
+        opacity: 0.9;
+    }
+    
     .pessoa-row input:read-only {
         background-color: #e9ecef;
     }
@@ -340,9 +404,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ========== GESTÃO DE PESSOAS (CLIENTES/ADVOGADOS) ==========
     
+    const isSuccess = {{ success|yesno:"true,false" }};
+    
     let pessoaCounter = 0;
     
     window.adicionarPessoa = function(tipo, dados = {}) {
+        // Não permite adicionar se o protocolo já foi salvo
+        if (isSuccess) {
+            return;
+        }
         const lista = document.getElementById('lista' + (tipo === 'cliente' ? 'Clientes' : 'Advogados'));
         const card = document.createElement('div');
         card.className = 'pessoa-card card border mb-3';
@@ -454,10 +524,12 @@ document.addEventListener('DOMContentLoaded', function() {
             this.value = maskTelefone(this.value);
         });
         
-        // Busca ao sair do campo de documento
-        docInput.addEventListener('blur', function() {
-            buscarCliente(this, card);
-        });
+        // Busca ao sair do campo de documento (apenas se não estiver em modo de sucesso)
+        if (!isSuccess) {
+            docInput.addEventListener('blur', function() {
+                buscarCliente(this, card);
+            });
+        }
         
         // Formata valores iniciais
         if (docValue) {
@@ -474,6 +546,10 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     window.removerPessoa = function(btn) {
+        // Não permite remover se o protocolo já foi salvo
+        if (isSuccess) {
+            return;
+        }
         btn.closest('.pessoa-card').remove();
     };
     
@@ -525,6 +601,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // ========== GESTÃO DE DOCUMENTOS ==========
     
     window.adicionarDocumento = function(valor = '') {
+        // Não permite adicionar se o protocolo já foi salvo
+        if (isSuccess) {
+            return;
+        }
         const lista = document.getElementById('listaDocumentos');
         const item = document.createElement('div');
         item.className = 'documento-item';
@@ -547,6 +627,10 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     window.removerDocumento = function(btn) {
+        // Não permite remover se o protocolo já foi salvo
+        if (isSuccess) {
+            return;
+        }
         btn.closest('.documento-item').remove();
     };
     
@@ -575,7 +659,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ========== VALIDAÇÃO ANTES DE ENVIAR ==========
     
-    document.getElementById('formProtocolo').addEventListener('submit', function(e) {
+    // Desabilita submissão se já foi salvo
+    if (isSuccess) {
+        document.getElementById('formProtocolo').addEventListener('submit', function(e) {
+            e.preventDefault();
+            return false;
+        });
+    } else {
+        document.getElementById('formProtocolo').addEventListener('submit', function(e) {
         const clientes = document.querySelectorAll('#listaClientes .pessoa-card');
         let temClienteValido = false;
         
@@ -593,6 +684,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
     });
+    }
 });
 </script>
 {% endblock %}
