@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from django.db.models import Max
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import ArrayField
@@ -143,6 +144,35 @@ class Protocolo(models.Model):
     
     clientes = models.ManyToManyField(Cliente, related_name='protocolos_como_cliente', verbose_name="Clientes Envolvidos")
     advogados = models.ManyToManyField(Cliente, related_name='protocolos_como_advogado', blank=True, verbose_name="Advogados")
+
+    def save(self, *args, **kwargs):
+        """
+        Gera automaticamente o numero_protocolo se estiver vazio.
+        Numeração: sequencial, única e infinita (1, 2, 3...).
+        Compartilhada entre todos os tipos (CERTIDAO e ATO_NOTARIAL).
+        """
+        if not self.numero_protocolo:
+            # Busca o maior número existente no banco
+            maior = Protocolo.objects.aggregate(Max('numero_protocolo'))['numero_protocolo__max']
+            
+            if maior:
+                # Extrai apenas dígitos e converte para inteiro
+                try:
+                    proximo = int(maior) + 1
+                except (ValueError, TypeError):
+                    # Se o valor atual não for numérico puro, busca o maior numérico
+                    from django.db.models.functions import Cast
+                    from django.db.models import IntegerField
+                    maior_int = Protocolo.objects.annotate(
+                        num_int=Cast('numero_protocolo', IntegerField())
+                    ).aggregate(Max('num_int'))['num_int__max']
+                    proximo = (maior_int or 0) + 1
+            else:
+                proximo = 1
+            
+            self.numero_protocolo = str(proximo)
+        
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Prot: {self.numero_protocolo} - {self.get_status_display()}"

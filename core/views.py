@@ -564,28 +564,6 @@ def _processar_lista_documentos(request):
     return [doc.strip() for doc in documentos if doc.strip()]
 
 
-def _gerar_numero_protocolo():
-    """Gera um número de protocolo único baseado no ano e sequência."""
-    from django.utils import timezone
-    ano = timezone.now().year
-    
-    # Busca o último protocolo do ano
-    ultimo = Protocolo.objects.filter(
-        numero_protocolo__startswith=f'CERT-{ano}-'
-    ).order_by('-numero_protocolo').first()
-    
-    if ultimo:
-        try:
-            ultimo_num = int(ultimo.numero_protocolo.split('-')[-1])
-            proximo = ultimo_num + 1
-        except (ValueError, IndexError):
-            proximo = 1
-    else:
-        proximo = 1
-    
-    return f'CERT-{ano}-{proximo:05d}'
-
-
 @login_required
 @transaction.atomic
 def protocolo_certidao_create(request):
@@ -597,17 +575,16 @@ def protocolo_certidao_create(request):
         form = ProtocoloCertidaoForm(request.POST)
         
         if form.is_valid():
-            # Salva o protocolo
+            # Salva o protocolo (numero_protocolo é gerado automaticamente no model)
             protocolo = form.save(commit=False)
             protocolo.tipo = Protocolo.TipoProtocolo.CERTIDAO
             protocolo.criado_por = request.user
             protocolo.responsavel = request.user
-            protocolo.numero_protocolo = _gerar_numero_protocolo()
             
             # Processa lista de documentos
             protocolo.lista_documentos = _processar_lista_documentos(request)
             
-            protocolo.save()
+            protocolo.save()  # Número gerado automaticamente aqui
             
             # Processa clientes (solicitantes) - permite CPF ou CNPJ
             clientes = _processar_pessoas_do_post(request, 'cliente', apenas_cpf=False)
