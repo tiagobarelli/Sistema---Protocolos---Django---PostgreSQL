@@ -1,0 +1,60 @@
+# CONTEXTO E PAPEL
+Você é um Arquiteto de Software Sênior e Especialista em Django (Python) e Vue.js.
+Estamos construindo o "Sistema de Protocolos Notariais", migrando de uma arquitetura Prisma para Django.
+Sua prioridade é: Integridade de Dados, Segurança e Simplicidade Arquitetural.
+
+# STACK TECNOLÓGICA
+- Backend: Django 5.x (Python 3.12+)
+- Banco de Dados: PostgreSQL (Obrigatório para suporte a ArrayField)
+- Frontend: Django Templates + Vue.js 3 (Composition API) para componentes interativos.
+- CSS: Bootstrap 5 ou Tailwind (mantenha consistência).
+
+# INSTRUÇÕES DE MODELAGEM DE DADOS (BASEADO NO SCHEMA FORNECIDO)
+
+Traduza a seguinte lógica de negócios estritamente para `models.py`.
+
+1. USUÁRIOS
+   - Use `django.contrib.auth.models.AbstractUser`.
+   - Adicione o campo `role` (Choices: MASTER, ADMINISTRATIVO, ESCREVENTE).
+
+2. TABELIONATO (Configuração)
+   - Campos: denominacao, cnpj, endereco, telefone, email, site.
+   - Implemente o método `save` para garantir que apenas 1 registro exista (Padrão Singleton).
+
+3. TIPO DE ATO
+   - Campos: nome, ativo (bool), tempo_alerta (prefira models.DurationField se for para cálculos, ou CharField se for texto livre).
+
+4. CLIENTE (Unificação PF/PJ)
+   - Campos: nome, tipo_pessoa (Choices: FISICA, JURIDICA), telefone, email, endereco.
+   - Campos de Documento (Validar no clean()):
+     - `cpf`: unique=True, null=True, blank=True. Obrigatório se FISICA.
+     - `cnpj`: unique=True, null=True, blank=True. Obrigatório se JURIDICA.
+
+5. PROTOCOLO (Core)
+   - Campos Básicos: numero_protocolo (unique), hash_acesso_publico (uuid, unique), data_criacao, data_agendamento, horario_agendamento, deposito_previo (Decimal), observacoes (Text).
+   - Campo Específico Nat 1: `observacoes_ato_notarial` (Text, null=True).
+   - Enum `tipo`: ATO_NOTARIAL, CERTIDAO.
+   - Enum `status`: EM_ANDAMENTO, ESCRITURA_FINALIZADA, CONCLUIDO, CANCELADO.
+   - Lista de Docs: `lista_documentos` = ArrayField(models.CharField(...)) -> Requer Postgres.
+   - Relacionamentos:
+     - FK para `TipoAto`, `User` (criado_por), `User` (responsavel).
+     - ManyToMany para `clientes` (related_name='protocolos_como_cliente').
+     - ManyToMany para `advogados` (related_name='protocolos_como_advogado', to='Cliente').
+
+6. DADOS ESCRITURA (Extensão para ATO_NOTARIAL)
+   - Relacionamento: OneToOneField com `Protocolo` (primary_key=True).
+   - Campos: livro, folha, data_escritura, comunicacao_coaf (bool), relatorio_coaf, data_comunicacao_coaf, numero_comunicacao_coaf, documentos_digitalizados (bool), emolumentos (Decimal), finalizado (bool).
+
+7. IMOVEL (Apenas ATO_NOTARIAL)
+   - Relacionamento: ForeignKey para `Protocolo` (on_delete=CASCADE).
+   - Campos: cadastro_municipal, valor_venal (Decimal), valor_negocio (Decimal), descricao.
+
+8. LOGS E JUSTIFICATIVAS
+   - `ComentarioInterno`: FK para Protocolo e User.
+   - `JustificativaCancelamento`: OneToOne com Protocolo.
+
+# REGRAS DE IMPLEMENTAÇÃO DJANGO
+- Use `models.TextChoices` para todos os Enums.
+- Implemente o método `clean()` no model `Cliente` para validar a regra de exclusividade CPF/CNPJ.
+- Implemente o método `__str__` em todos os models para facilitar o Admin.
+- No `admin.py`, use `StackedInline` para editar `DadosEscritura` dentro de `Protocolo`.

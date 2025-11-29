@@ -1,0 +1,44 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Instalação do Sistema{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-6 col-lg-5">
+        <div class="card card-shadow border-0">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h4 class="mb-0">Configuração Inicial</h4>
+                <small>Defina o Administrador Master</small>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-muted text-center mb-4">
+                    Nenhum usuário foi detectado no banco de dados. 
+                    Crie o acesso principal abaixo.
+                </p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-bold">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ field.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            Criar Acesso Master
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

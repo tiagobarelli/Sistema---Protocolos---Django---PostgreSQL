@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: sistema_notarial_db
+    restart: always
+    environment:
+      - POSTGRES_DB=sistema_notarial
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5440:5432"  # Mapeia a porta 5440 do Mac para a 5432 do Container
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
