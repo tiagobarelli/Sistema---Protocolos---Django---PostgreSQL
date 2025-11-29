@@ -73,27 +73,17 @@
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-people me-2"></i>Solicitantes</h5>
                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="adicionarPessoa('cliente')">
-                        <i class="bi bi-plus-lg me-1"></i>Adicionar
+                        <i class="bi bi-plus-lg me-1"></i>Adicionar Solicitante
                     </button>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0" id="tabelaClientes">
-                            <thead class="table-light">
-                                <tr>
-                                    <th style="width: 200px;">CPF/CNPJ</th>
-                                    <th>Nome</th>
-                                    <th style="width: 60px;" class="text-center">Ação</th>
-                                </tr>
-                            </thead>
-                            <tbody id="listaClientes">
-                                <!-- Linhas serão adicionadas via JS -->
-                            </tbody>
-                        </table>
+                <div class="card-body">
+                    <div id="listaClientes">
+                        <!-- Cards de clientes serão adicionados via JS -->
                     </div>
-                    <div class="p-3 bg-light border-top text-muted small">
+                    <div class="alert alert-info mb-0 mt-3 small">
                         <i class="bi bi-info-circle me-1"></i>
-                        Digite o CPF/CNPJ e pressione Tab. Se o cliente existir, o nome será preenchido automaticamente.
+                        <strong>Dica:</strong> Digite o CPF/CNPJ e pressione Tab. Se o cliente existir, os dados serão preenchidos automaticamente.
+                        Você pode editar as informações para atualizá-las no cadastro.
                     </div>
                 </div>
             </div>
@@ -112,27 +102,16 @@
                     </div>
                 </div>
                 <div id="advogados_container" style="{% if not has_advogados %}display: none;{% endif %}">
-                    <div class="card-body p-0">
-                        <div class="d-flex justify-content-end p-2 bg-light border-bottom">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-end mb-3">
                             <button type="button" class="btn btn-sm btn-outline-primary" onclick="adicionarPessoa('advogado')">
                                 <i class="bi bi-plus-lg me-1"></i>Adicionar Advogado
                             </button>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0" id="tabelaAdvogados">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th style="width: 200px;">CPF</th>
-                                        <th>Nome do Advogado</th>
-                                        <th style="width: 60px;" class="text-center">Ação</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="listaAdvogados">
-                                    <!-- Linhas serão adicionadas via JS -->
-                                </tbody>
-                            </table>
+                        <div id="listaAdvogados">
+                            <!-- Cards de advogados serão adicionados via JS -->
                         </div>
-                        <div class="p-3 bg-light border-top text-muted small">
+                        <div class="alert alert-secondary mb-0 mt-3 small">
                             <i class="bi bi-info-circle me-1"></i>
                             Advogados devem ser cadastrados com CPF (pessoa física).
                         </div>
@@ -262,6 +241,27 @@
         text-align: center;
         color: #6c757d;
         padding: 2rem;
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+        border: 2px dashed #dee2e6;
+    }
+    
+    /* Estilo dos cards de pessoa */
+    .pessoa-card {
+        transition: all 0.3s ease;
+    }
+    
+    .pessoa-card:hover {
+        box-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.1);
+    }
+    
+    .pessoa-card .form-label {
+        font-weight: 500;
+    }
+    
+    .pessoa-card .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
     }
 </style>
 {% endblock %}
@@ -322,108 +322,198 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // ========== MÁSCARA DE TELEFONE ==========
+    
+    function maskTelefone(value) {
+        let v = value.replace(/\D/g, '').substring(0, 11);
+        if (v.length > 10) {
+            // Celular: (00) 00000-0000
+            v = v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+        } else if (v.length > 6) {
+            // Fixo: (00) 0000-0000
+            v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+        } else if (v.length > 2) {
+            v = v.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+        }
+        return v;
+    }
+    
     // ========== GESTÃO DE PESSOAS (CLIENTES/ADVOGADOS) ==========
+    
+    let pessoaCounter = 0;
     
     window.adicionarPessoa = function(tipo, dados = {}) {
         const lista = document.getElementById('lista' + (tipo === 'cliente' ? 'Clientes' : 'Advogados'));
-        const row = document.createElement('tr');
-        row.className = 'pessoa-row';
+        const card = document.createElement('div');
+        card.className = 'pessoa-card card border mb-3';
+        pessoaCounter++;
         
         const idValue = dados.id || '';
         const docValue = dados.documento || '';
         const nomeValue = dados.nome || '';
-        const readOnly = idValue ? 'readonly' : '';
+        const telefoneValue = dados.telefone || '';
+        const emailValue = dados.email || '';
+        const enderecoValue = dados.endereco || '';
         
         // Advogado: apenas CPF | Cliente: CPF ou CNPJ
         const isAdvogado = tipo === 'advogado';
-        const placeholder = isAdvogado ? '000.000.000-00' : '000.000.000-00 ou 00.000.000/0000-00';
-        const maxLength = isAdvogado ? '14' : '18'; // CPF formatado = 14 chars, CNPJ = 18
-        const labelNome = isAdvogado ? 'Nome do advogado' : 'Nome completo';
+        const placeholderDoc = isAdvogado ? '000.000.000-00' : '000.000.000-00 ou 00.000.000/0000-00';
+        const maxLength = isAdvogado ? '14' : '18';
+        const labelDoc = isAdvogado ? 'CPF do Advogado' : 'CPF/CNPJ';
+        const labelNome = isAdvogado ? 'Nome do Advogado' : 'Nome Completo / Razão Social';
+        const cardBg = isAdvogado ? 'bg-light' : '';
         
-        row.innerHTML = `
-            <td>
-                <input type="hidden" name="${tipo}_id[]" value="${idValue}">
-                <input type="text" class="form-control documento-input" 
-                       name="${tipo}_documento[]" 
-                       placeholder="${placeholder}"
-                       value="${docValue}"
-                       maxlength="${maxLength}"
-                       data-tipo="${tipo}">
-            </td>
-            <td>
-                <input type="text" class="form-control nome-input" 
-                       name="${tipo}_nome[]" 
-                       placeholder="${labelNome}"
-                       value="${nomeValue}"
-                       ${readOnly}>
-            </td>
-            <td class="text-center">
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removerPessoa(this)">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </td>
+        card.innerHTML = `
+            <div class="card-body ${cardBg}">
+                <input type="hidden" name="${tipo}_id[]" value="${idValue}" class="pessoa-id">
+                
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="badge bg-secondary-subtle text-secondary">
+                        <i class="bi bi-person me-1"></i>${isAdvogado ? 'Advogado' : 'Solicitante'} #${pessoaCounter}
+                    </span>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removerPessoa(this)" title="Remover">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                
+                <!-- Linha 1: Documento e Nome -->
+                <div class="row g-2 mb-2">
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1">${labelDoc} <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control documento-input" 
+                               name="${tipo}_documento[]" 
+                               placeholder="${placeholderDoc}"
+                               value="${docValue}"
+                               maxlength="${maxLength}"
+                               data-tipo="${tipo}"
+                               required>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label small text-muted mb-1">${labelNome} <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control nome-input" 
+                               name="${tipo}_nome[]" 
+                               placeholder="${labelNome}"
+                               value="${nomeValue}"
+                               required>
+                    </div>
+                </div>
+                
+                <!-- Linha 2: Telefone e E-mail -->
+                <div class="row g-2 mb-2">
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted mb-1"><i class="bi bi-telephone me-1"></i>Telefone</label>
+                        <input type="text" class="form-control telefone-input" 
+                               name="${tipo}_telefone[]" 
+                               placeholder="(00) 00000-0000"
+                               value="${telefoneValue}"
+                               maxlength="15">
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label small text-muted mb-1"><i class="bi bi-envelope me-1"></i>E-mail</label>
+                        <input type="email" class="form-control email-input" 
+                               name="${tipo}_email[]" 
+                               placeholder="email@exemplo.com"
+                               value="${emailValue}">
+                    </div>
+                </div>
+                
+                <!-- Linha 3: Endereço -->
+                <div class="row g-2">
+                    <div class="col-12">
+                        <label class="form-label small text-muted mb-1"><i class="bi bi-geo-alt me-1"></i>Endereço</label>
+                        <input type="text" class="form-control endereco-input" 
+                               name="${tipo}_endereco[]" 
+                               placeholder="Rua, número, bairro, cidade - UF"
+                               value="${enderecoValue}">
+                    </div>
+                </div>
+            </div>
         `;
         
-        lista.appendChild(row);
+        lista.appendChild(card);
         
-        // Adiciona eventos
-        const docInput = row.querySelector('.documento-input');
-        const nomeInput = row.querySelector('.nome-input');
+        // Referências aos inputs
+        const docInput = card.querySelector('.documento-input');
+        const nomeInput = card.querySelector('.nome-input');
+        const telefoneInput = card.querySelector('.telefone-input');
+        const emailInput = card.querySelector('.email-input');
+        const enderecoInput = card.querySelector('.endereco-input');
+        const idInput = card.querySelector('.pessoa-id');
         
-        // Máscara ao digitar - diferenciada para advogado (só CPF)
+        // Máscara de documento ao digitar
         docInput.addEventListener('input', function() {
             if (isAdvogado) {
-                // Advogado: força apenas máscara de CPF
                 this.value = maskCPF(this.value);
             } else {
-                // Cliente: permite CPF ou CNPJ
                 this.value = maskDocumento(this.value);
             }
         });
         
-        // Busca ao sair do campo
-        docInput.addEventListener('blur', function() {
-            buscarCliente(this, nomeInput, row.querySelector('input[type="hidden"]'));
+        // Máscara de telefone
+        telefoneInput.addEventListener('input', function() {
+            this.value = maskTelefone(this.value);
         });
         
-        // Formata valor inicial se houver
+        // Busca ao sair do campo de documento
+        docInput.addEventListener('blur', function() {
+            buscarCliente(this, card);
+        });
+        
+        // Formata valores iniciais
         if (docValue) {
-            if (isAdvogado) {
-                docInput.value = maskCPF(docValue);
-            } else {
-                docInput.value = maskDocumento(docValue);
-            }
+            docInput.value = isAdvogado ? maskCPF(docValue) : maskDocumento(docValue);
+        }
+        if (telefoneValue) {
+            telefoneInput.value = maskTelefone(telefoneValue);
         }
         
-        // Foca no campo de documento
+        // Foca no campo de documento se for novo
         if (!idValue) {
             docInput.focus();
         }
     };
     
     window.removerPessoa = function(btn) {
-        btn.closest('tr').remove();
+        btn.closest('.pessoa-card').remove();
     };
     
-    async function buscarCliente(docInput, nomeInput, idInput) {
+    async function buscarCliente(docInput, card) {
         const documento = docInput.value.replace(/\D/g, '');
         
         if (documento.length < 11) {
             return; // Documento muito curto
         }
         
+        // Referencias aos campos do card
+        const nomeInput = card.querySelector('.nome-input');
+        const telefoneInput = card.querySelector('.telefone-input');
+        const emailInput = card.querySelector('.email-input');
+        const enderecoInput = card.querySelector('.endereco-input');
+        const idInput = card.querySelector('.pessoa-id');
+        
         try {
             const response = await fetch(`{% url 'api_buscar_cliente' %}?documento=${documento}`);
             const data = await response.json();
             
             if (data.found) {
+                // Preenche todos os campos
                 nomeInput.value = data.nome;
-                nomeInput.readOnly = true;
+                telefoneInput.value = maskTelefone(data.telefone || '');
+                emailInput.value = data.email || '';
+                enderecoInput.value = data.endereco || '';
                 idInput.value = data.id;
-                nomeInput.classList.add('bg-success-subtle');
-                setTimeout(() => nomeInput.classList.remove('bg-success-subtle'), 1000);
+                
+                // Feedback visual de sucesso
+                card.classList.add('border-success');
+                card.querySelector('.card-body').classList.add('bg-success-subtle');
+                
+                setTimeout(() => {
+                    card.classList.remove('border-success');
+                    card.querySelector('.card-body').classList.remove('bg-success-subtle');
+                }, 1500);
+                
             } else {
-                nomeInput.readOnly = false;
+                // Cliente não encontrado - limpa ID e permite edição
                 idInput.value = '';
                 nomeInput.focus();
             }
@@ -486,12 +576,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // ========== VALIDAÇÃO ANTES DE ENVIAR ==========
     
     document.getElementById('formProtocolo').addEventListener('submit', function(e) {
-        const clientes = document.querySelectorAll('#listaClientes .pessoa-row');
+        const clientes = document.querySelectorAll('#listaClientes .pessoa-card');
         let temClienteValido = false;
         
-        clientes.forEach(row => {
-            const doc = row.querySelector('.documento-input').value.replace(/\D/g, '');
-            const nome = row.querySelector('.nome-input').value.trim();
+        clientes.forEach(card => {
+            const doc = card.querySelector('.documento-input').value.replace(/\D/g, '');
+            const nome = card.querySelector('.nome-input').value.trim();
             if (doc.length >= 11 && nome) {
                 temClienteValido = true;
             }

@@ -444,7 +444,7 @@ def cliente_update(request, pk):
 def api_buscar_cliente(request):
     """
     API para buscar cliente por CPF ou CNPJ.
-    Retorna: {found: bool, id: int|null, nome: str, tipo_pessoa: str}
+    Retorna dados completos do cliente para autopreenchimento.
     """
     documento = request.GET.get('documento', '').strip()
     
@@ -452,7 +452,15 @@ def api_buscar_cliente(request):
     documento_limpo = re.sub(r'\D', '', documento)
     
     if not documento_limpo:
-        return JsonResponse({'found': False, 'id': None, 'nome': '', 'tipo_pessoa': ''})
+        return JsonResponse({
+            'found': False, 
+            'id': None, 
+            'nome': '', 
+            'tipo_pessoa': '',
+            'telefone': '',
+            'email': '',
+            'endereco': ''
+        })
     
     # Busca por CPF ou CNPJ
     cliente = Cliente.objects.filter(
@@ -465,9 +473,20 @@ def api_buscar_cliente(request):
             'id': cliente.id,
             'nome': cliente.nome,
             'tipo_pessoa': cliente.tipo_pessoa,
+            'telefone': cliente.telefone or '',
+            'email': cliente.email or '',
+            'endereco': cliente.endereco or '',
         })
     
-    return JsonResponse({'found': False, 'id': None, 'nome': '', 'tipo_pessoa': ''})
+    return JsonResponse({
+        'found': False, 
+        'id': None, 
+        'nome': '', 
+        'tipo_pessoa': '',
+        'telefone': '',
+        'email': '',
+        'endereco': ''
+    })
 
 
 # ========== PROTOCOLOS - CERTIDÃO ==========
@@ -482,7 +501,9 @@ def _limpar_documento(valor):
 def _processar_pessoas_do_post(request, prefixo, apenas_cpf=False):
     """
     Processa os dados de clientes/advogados enviados via POST.
-    Retorna lista de objetos Cliente (criados ou encontrados).
+    Retorna lista de objetos Cliente (criados ou atualizados).
+    
+    Usa update_or_create para manter cadastros atualizados.
     
     Parâmetros:
     - prefixo: 'cliente' ou 'advogado'
@@ -491,30 +512,30 @@ def _processar_pessoas_do_post(request, prefixo, apenas_cpf=False):
     Espera campos no formato:
     - {prefixo}_documento[]
     - {prefixo}_nome[]
+    - {prefixo}_telefone[]
+    - {prefixo}_email[]
+    - {prefixo}_endereco[]
     - {prefixo}_id[] (opcional, para clientes já existentes)
     """
     documentos = request.POST.getlist(f'{prefixo}_documento[]')
     nomes = request.POST.getlist(f'{prefixo}_nome[]')
+    telefones = request.POST.getlist(f'{prefixo}_telefone[]')
+    emails = request.POST.getlist(f'{prefixo}_email[]')
+    enderecos = request.POST.getlist(f'{prefixo}_endereco[]')
     ids = request.POST.getlist(f'{prefixo}_id[]')
     
     pessoas = []
     
     for i, doc in enumerate(documentos):
         doc_limpo = _limpar_documento(doc)
-        nome = nomes[i] if i < len(nomes) else ''
+        nome = nomes[i].strip() if i < len(nomes) else ''
+        telefone = telefones[i].strip() if i < len(telefones) else ''
+        email = emails[i].strip() if i < len(emails) else ''
+        endereco = enderecos[i].strip() if i < len(enderecos) else ''
         cliente_id = ids[i] if i < len(ids) else ''
         
         if not doc_limpo and not nome:
             continue  # Linha vazia
-        
-        # Se tem ID, busca o cliente existente
-        if cliente_id:
-            try:
-                cliente = Cliente.objects.get(pk=int(cliente_id))
-                pessoas.append(cliente)
-                continue
-            except (Cliente.DoesNotExist, ValueError):
-                pass
         
         # Determina tipo de pessoa pelo tamanho do documento
         # Se apenas_cpf=True (advogado), força pessoa física
@@ -532,26 +553,37 @@ def _processar_pessoas_do_post(request, prefixo, apenas_cpf=False):
             cpf = doc_limpo if doc_limpo else None
             cnpj = None
         
-        if not nome.strip():
+        if not nome:
             continue  # Sem nome, não cria
         
-        # Busca ou cria o cliente
+        # Dados para criar/atualizar
+        dados_cliente = {
+            'nome': nome,
+            'tipo_pessoa': tipo_pessoa,
+        }
+        
+        # Só atualiza campos opcionais se preenchidos
+        if telefone:
+            dados_cliente['telefone'] = telefone
+        if email:
+            dados_cliente['email'] = email
+        if endereco:
+            dados_cliente['endereco'] = endereco
+        
+        # Usa update_or_create para criar ou atualizar o cliente
         if cpf:
-            cliente, created = Cliente.objects.get_or_create(
+            cliente, created = Cliente.objects.update_or_create(
                 cpf=cpf,
-                defaults={'nome': nome.strip(), 'tipo_pessoa': tipo_pessoa}
+                defaults=dados_cliente
             )
         elif cnpj:
-            cliente, created = Cliente.objects.get_or_create(
+            cliente, created = Cliente.objects.update_or_create(
                 cnpj=cnpj,
-                defaults={'nome': nome.strip(), 'tipo_pessoa': tipo_pessoa}
+                defaults=dados_cliente
             )
         else:
             # Sem documento válido, cria novo apenas pelo nome (caso especial)
-            cliente = Cliente.objects.create(
-                nome=nome.strip(),
-                tipo_pessoa=Cliente.TipoPessoa.FISICA
-            )
+            cliente = Cliente.objects.create(**dados_cliente)
         
         pessoas.append(cliente)
     
@@ -661,13 +693,27 @@ def protocolo_certidao_update(request, pk):
     else:
         form = ProtocoloCertidaoForm(instance=protocolo)
     
-    # Prepara dados para o template
+    # Prepara dados para o template (incluindo dados completos para edição)
     clientes_data = [
-        {'id': c.id, 'documento': c.cpf or c.cnpj or '', 'nome': c.nome}
+        {
+            'id': c.id, 
+            'documento': c.cpf or c.cnpj or '', 
+            'nome': c.nome,
+            'telefone': c.telefone or '',
+            'email': c.email or '',
+            'endereco': c.endereco or '',
+        }
         for c in protocolo.clientes.all()
     ]
     advogados_data = [
-        {'id': a.id, 'documento': a.cpf or a.cnpj or '', 'nome': a.nome}
+        {
+            'id': a.id, 
+            'documento': a.cpf or a.cnpj or '', 
+            'nome': a.nome,
+            'telefone': a.telefone or '',
+            'email': a.email or '',
+            'endereco': a.endereco or '',
+        }
         for a in protocolo.advogados.all()
     ]
     documentos_data = protocolo.lista_documentos or []
