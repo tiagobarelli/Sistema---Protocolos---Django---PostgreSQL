@@ -720,21 +720,12 @@ def protocolo_certidao_update(request, pk):
             
             # Processa lista de documentos
             protocolo.lista_documentos = _processar_lista_documentos(request)
-            
+
             protocolo.save()
-            
-            # Processa clientes (solicitantes) - permite CPF ou CNPJ
-            clientes = _processar_pessoas_do_post(request, 'cliente', apenas_cpf=False)
-            protocolo.clientes.set(clientes)
-            
-            # Processa advogados (se houver) - apenas CPF (pessoa física)
-            tem_advogado = request.POST.get('tem_advogado') == 'on'
-            if tem_advogado:
-                advogados = _processar_pessoas_do_post(request, 'advogado', apenas_cpf=True)
-                protocolo.advogados.set(advogados)
-            else:
-                protocolo.advogados.clear()
-            
+
+            # Clientes e Advogados são READ-ONLY no modo edição
+            # Podem ser alterados apenas durante a criação do protocolo
+
             messages.success(request, f'Protocolo {protocolo.numero_protocolo} atualizado com sucesso!')
             
             # Recarrega o protocolo para garantir dados atualizados
@@ -779,11 +770,18 @@ def protocolo_certidao_update(request, pk):
         'button_text': 'Atualizar Protocolo',
         'is_edit': True,
         'protocolo': protocolo,
-        'clientes_data': json.dumps(clientes_data),
-        'advogados_data': json.dumps(advogados_data),
+        'clientes_data': json.dumps(clientes_data),  # Mantido para compatibilidade (agora read-only)
+        'advogados_data': json.dumps(advogados_data),  # Mantido para compatibilidade (agora read-only)
         'documentos_data': json.dumps(documentos_data),
         'has_advogados': protocolo.advogados.exists(),
         'success': success,
+        # Novos itens para suporte às abas e permissões
+        'comentarios': protocolo.comentarios.select_related('usuario').order_by('-data_criacao'),
+        'user_can_edit': (
+            request.user.role in [User.Role.MASTER, User.Role.ADMINISTRATIVO] or
+            protocolo.criado_por == request.user
+        ),
+        'user_can_edit_responsavel': request.user.role in [User.Role.MASTER, User.Role.ADMINISTRATIVO],
     }
     return render(request, 'core/protocolo_certidao_form.html', context)
 

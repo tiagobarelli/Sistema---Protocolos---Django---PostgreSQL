@@ -416,13 +416,14 @@ class ProtocoloCertidaoForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # Extrai o user do kwargs se fornecido (para definir valor inicial)
+        # Extrai o user do kwargs se fornecido (para definir valor inicial e permissões)
         self.user = kwargs.pop('user', None)
+        instance = kwargs.get('instance', None)
         super().__init__(*args, **kwargs)
-        
+
         # Filtra apenas tipos de ato ativos
         self.fields['tipo_ato'].queryset = TipoAto.objects.filter(ativo=True)
-        
+
         # Configura o campo responsavel com queryset de usuários ativos
         # Usa label_from_instance para exibir apenas o nome, sem o role
         class ResponsavelChoiceField(forms.ModelChoiceField):
@@ -431,7 +432,7 @@ class ProtocoloCertidaoForm(forms.ModelForm):
                 if obj.get_full_name():
                     return obj.get_full_name()
                 return obj.username
-        
+
         self.fields['responsavel'] = ResponsavelChoiceField(
             queryset=User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username'),
             widget=forms.Select(attrs={
@@ -441,11 +442,39 @@ class ProtocoloCertidaoForm(forms.ModelForm):
             required=True,
             empty_label='Selecione o responsável...'
         )
-        
+
         # Define valor inicial como o usuário atual na criação
-        if self.user and not self.instance.pk:
+        if self.user and not instance:
             self.fields['responsavel'].initial = self.user
-        
+
+        # ===== LÓGICA DE PERMISSÕES PARA MODO EDIÇÃO =====
+        if self.user and instance:
+            # Determina permissões do usuário
+            is_master_or_admin = self.user.role in [User.Role.MASTER, User.Role.ADMINISTRATIVO]
+            is_creator = (instance.criado_por == self.user)
+
+            # REGRA 1: Campo responsavel - APENAS para MASTER/ADMINISTRATIVO
+            if not is_master_or_admin:
+                self.fields['responsavel'].disabled = True
+                self.fields['responsavel'].widget.attrs.update({
+                    'class': 'form-select bg-light',
+                    'title': 'Apenas Administradores podem alterar o responsável'
+                })
+
+            # REGRA 2: Outros campos - SE usuário é MASTER/ADMIN OU criador
+            can_edit_fields = is_master_or_admin or is_creator
+            if not can_edit_fields:
+                for field_name in ['data_agendamento', 'horario_agendamento', 'deposito_previo', 'observacoes']:
+                    field = self.fields[field_name]
+                    field.disabled = True
+
+                    # Adiciona indicação visual
+                    current_class = field.widget.attrs.get('class', '')
+                    field.widget.attrs['class'] = f'{current_class} bg-light'
+
+                    if field_name == 'observacoes':
+                        field.widget.attrs['placeholder'] = 'Sem permissão para editar observações'
+
         # Campos opcionais
         self.fields['data_agendamento'].required = False
         self.fields['horario_agendamento'].required = False

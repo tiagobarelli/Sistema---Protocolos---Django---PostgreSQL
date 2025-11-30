@@ -5,686 +5,485 @@
 
 {% block content %}
 <!-- Page Header -->
-<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
-    <div>
-        <h1><i class="bi bi-file-earmark-text me-2"></i>{{ title }}</h1>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{% url 'home' %}">Início</a></li>
-                <li class="breadcrumb-item active">Protocolo de Certidão</li>
-            </ol>
-        </nav>
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+        <div>
+            <h1 class="mb-2">
+                <i class="bi bi-file-earmark-text me-2"></i>
+                {% if is_edit %}Certidão #{{ protocolo.numero_protocolo }}{% else %}Nova Certidão{% endif %}
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Início</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'protocolo_list_em_andamento' %}">Protocolos</a></li>
+                    <li class="breadcrumb-item active">
+                        {% if is_edit %}Editar Certidão{% else %}Nova Certidão{% endif %}
+                    </li>
+                </ol>
+            </nav>
+        </div>
+
+        {% if is_edit and protocolo %}
+        <span class="badge bg-primary px-3 py-2 fs-6">
+            {{ protocolo.get_status_display }}
+        </span>
+        {% endif %}
     </div>
+
     {% if is_edit and protocolo %}
-    <span class="badge bg-primary-subtle text-primary px-3 py-2 fs-6">
-        <i class="bi bi-hash me-1"></i>{{ protocolo.numero_protocolo }}
-    </span>
+    <!-- Info Cards Row -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-3">
+            <div class="card border-0 bg-primary-subtle">
+                <div class="card-body py-2">
+                    <div class="small text-muted">Protocolo</div>
+                    <div class="fw-bold text-primary fs-5">#{{ protocolo.numero_protocolo }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 bg-info-subtle">
+                <div class="card-body py-2">
+                    <div class="small text-muted">Tipo de Ato</div>
+                    <div class="fw-bold text-info">{{ protocolo.tipo_ato.nome }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 bg-secondary-subtle">
+                <div class="card-body py-2">
+                    <div class="small text-muted">Criado em</div>
+                    <div class="fw-bold text-secondary">{{ protocolo.data_criacao|date:"d/m/Y H:i" }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 bg-success-subtle">
+                <div class="card-body py-2">
+                    <div class="small text-muted">Criado por</div>
+                    <div class="fw-bold text-success">
+                        {{ protocolo.criado_por.get_full_name|default:protocolo.criado_por.username }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     {% endif %}
 </div>
 
 <form method="post" id="formProtocolo" novalidate>
     {% csrf_token %}
-    {% if success %}
-    <fieldset disabled>
-    {% endif %}
 
     {% if success %}
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>
-        <strong>Protocolo salvo com sucesso!</strong> O protocolo {{ protocolo.numero_protocolo }} foi registrado no sistema.
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <strong>Sucesso!</strong> Protocolo atualizado.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
     {% endif %}
 
     {% if form.non_field_errors %}
-    <div class="alert alert-danger">
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="bi bi-exclamation-triangle me-2"></i>
         {{ form.non_field_errors|join:', ' }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
     {% endif %}
 
-    <div class="row g-4">
-        <!-- Coluna Principal -->
-        <div class="col-12 col-xl-8">
-            
-            <!-- Card: Dados do Pedido -->
-            <div class="card mb-4">
-                <div class="card-header py-3">
-                    <h5 class="mb-0"><i class="bi bi-clipboard me-2"></i>Dados do Pedido</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label fw-medium" for="id_tipo_ato">
-                                Tipo de Certidão <span class="text-danger">*</span>
-                            </label>
-                            {{ form.tipo_ato }}
-                            {% if form.tipo_ato.errors %}
-                            <div class="invalid-feedback d-block">{{ form.tipo_ato.errors|join:', ' }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-medium" for="id_data_agendamento">
-                                Data de Entrega
-                            </label>
-                            {{ form.data_agendamento }}
-                            {% if form.data_agendamento.errors %}
-                            <div class="invalid-feedback d-block">{{ form.data_agendamento.errors|join:', ' }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-medium" for="id_responsavel">
-                                Responsável pelo Protocolo <span class="text-danger">*</span>
-                            </label>
-                            {{ form.responsavel }}
-                            {% if form.responsavel.errors %}
-                            <div class="invalid-feedback d-block">{{ form.responsavel.errors|join:', ' }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-medium" for="id_horario_agendamento">
-                                Horário
-                            </label>
-                            {{ form.horario_agendamento }}
-                            {% if form.horario_agendamento.errors %}
-                            <div class="invalid-feedback d-block">{{ form.horario_agendamento.errors|join:', ' }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card: Solicitantes (Clientes) -->
-            <div class="card mb-4">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-people me-2"></i>Solicitantes</h5>
-                    {% if not success %}
-                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="adicionarPessoa('cliente')">
-                        <i class="bi bi-plus-lg me-1"></i>Adicionar Solicitante
+    <!-- Tab Card -->
+    <div class="card">
+        <div class="card-header p-0 bg-transparent border-bottom">
+            <ul class="nav nav-tabs card-header-tabs mb-0" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="visao-geral-tab" data-bs-toggle="tab"
+                            data-bs-target="#visao-geral-pane" type="button" role="tab">
+                        <i class="bi bi-eye me-1"></i>Visão Geral
                     </button>
-                    {% endif %}
-                </div>
-                <div class="card-body">
-                    <div id="listaClientes">
-                        <!-- Cards de clientes serão adicionados via JS -->
-                    </div>
-                    <div class="alert alert-info mb-0 mt-3 small">
-                        <i class="bi bi-info-circle me-1"></i>
-                        <strong>Dica:</strong> Digite o CPF/CNPJ e pressione Tab. Se o cliente existir, os dados serão preenchidos automaticamente.
-                        Você pode editar as informações para atualizá-las no cadastro.
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card: Advogados (Toggle) -->
-            <div class="card mb-4">
-                <div class="card-header py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="bi bi-briefcase me-2"></i>Advogados</h5>
-                        <div class="form-check form-switch mb-0">
-                            <input class="form-check-input" type="checkbox" role="switch" 
-                                   id="toggle_advogados" name="tem_advogado"
-                                   {% if has_advogados %}checked{% endif %}>
-                            <label class="form-check-label" for="toggle_advogados">Possui advogado?</label>
-                        </div>
-                    </div>
-                </div>
-                <div id="advogados_container" style="{% if not has_advogados %}display: none;{% endif %}">
-                    <div class="card-body">
-                        {% if not success %}
-                        <div class="d-flex justify-content-end mb-3">
-                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="adicionarPessoa('advogado')">
-                                <i class="bi bi-plus-lg me-1"></i>Adicionar Advogado
-                            </button>
-                        </div>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="comentarios-tab" data-bs-toggle="tab"
+                            data-bs-target="#comentarios-pane" type="button" role="tab">
+                        <i class="bi bi-chat-left-text me-1"></i>Comentários
+                        {% if comentarios %}
+                        <span class="badge bg-primary-subtle text-primary ms-1">{{ comentarios|length }}</span>
                         {% endif %}
-                        <div id="listaAdvogados">
-                            <!-- Cards de advogados serão adicionados via JS -->
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tarefas-tab" data-bs-toggle="tab"
+                            data-bs-target="#tarefas-pane" type="button" role="tab">
+                        <i class="bi bi-list-check me-1"></i>Tarefas
+                    </button>
+                </li>
+                <!-- Hidden para Certidões -->
+                <li class="nav-item" role="presentation" style="display: none;">
+                    <button class="nav-link" id="escritura-tab" disabled>
+                        <i class="bi bi-pencil-square me-1"></i>Controle da Escritura
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="conclusao-tab" data-bs-toggle="tooltip"
+                            title="Disponível ao finalizar protocolo" disabled>
+                        <i class="bi bi-check-circle me-1"></i>Conclusão
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body">
+            <div class="tab-content" id="protocoloTabContent">
+
+                <!-- ========== TAB 1: VISÃO GERAL ========== -->
+                <div class="tab-pane fade show active" id="visao-geral-pane" role="tabpanel">
+
+                    <!-- Card 1.1: Dados do Pedido -->
+                    <div class="card mb-4">
+                        <div class="card-header py-3 bg-light">
+                            <h5 class="mb-0"><i class="bi bi-calendar-event me-2"></i>Dados do Pedido</h5>
                         </div>
-                        <div class="alert alert-secondary mb-0 mt-3 small">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Advogados devem ser cadastrados com CPF (pessoa física).
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    {{ form.responsavel.label_tag }}
+                                    {{ form.responsavel }}
+                                    {% if form.responsavel.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.responsavel.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-3">
+                                    {{ form.data_agendamento.label_tag }}
+                                    {{ form.data_agendamento }}
+                                    {% if form.data_agendamento.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.data_agendamento.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-3">
+                                    {{ form.horario_agendamento.label_tag }}
+                                    {{ form.horario_agendamento }}
+                                    {% if form.horario_agendamento.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.horario_agendamento.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.deposito_previo.label_tag }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">R$</span>
+                                        {{ form.deposito_previo }}
+                                    </div>
+                                    {% if form.deposito_previo.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.deposito_previo.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 1.2: Solicitantes (READ ONLY) -->
+                    <div class="card mb-4">
+                        <div class="card-header py-3 bg-light">
+                            <h5 class="mb-0"><i class="bi bi-people me-2"></i>Solicitantes (Clientes)</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if protocolo.clientes.exists %}
+                                {% for cliente in protocolo.clientes.all %}
+                                <div class="card border mb-3">
+                                    <div class="card-body">
+                                        <div class="row g-2">
+                                            <div class="col-md-4">
+                                                <div class="small text-muted mb-1">
+                                                    {% if cliente.cpf %}CPF{% else %}CNPJ{% endif %}
+                                                </div>
+                                                <div class="fw-medium">
+                                                    {% if cliente.cpf %}
+                                                        {{ cliente.cpf|format_cpf }}
+                                                    {% else %}
+                                                        {{ cliente.cnpj|format_cnpj }}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <div class="small text-muted mb-1">Nome</div>
+                                                <div class="fw-medium">{{ cliente.nome }}</div>
+                                            </div>
+                                            {% if cliente.telefone %}
+                                            <div class="col-md-4">
+                                                <div class="small text-muted mb-1">
+                                                    <i class="bi bi-telephone"></i> Telefone
+                                                </div>
+                                                <div>{{ cliente.telefone|format_telefone }}</div>
+                                            </div>
+                                            {% endif %}
+                                            {% if cliente.email %}
+                                            <div class="col-md-8">
+                                                <div class="small text-muted mb-1">
+                                                    <i class="bi bi-envelope"></i> E-mail
+                                                </div>
+                                                <div>{{ cliente.email }}</div>
+                                            </div>
+                                            {% endif %}
+                                            {% if cliente.endereco %}
+                                            <div class="col-12">
+                                                <div class="small text-muted mb-1">
+                                                    <i class="bi bi-geo-alt"></i> Endereço
+                                                </div>
+                                                <div>{{ cliente.endereco }}</div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="alert alert-info mb-0">
+                                    <i class="bi bi-info-circle me-1"></i>Nenhum solicitante cadastrado.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Card 1.3: Advogados (READ ONLY) -->
+                    {% if protocolo.advogados.exists %}
+                    <div class="card mb-4">
+                        <div class="card-header py-3 bg-light">
+                            <h5 class="mb-0"><i class="bi bi-briefcase me-2"></i>Advogados</h5>
+                        </div>
+                        <div class="card-body">
+                            {% for advogado in protocolo.advogados.all %}
+                            <div class="card border mb-3">
+                                <div class="card-body">
+                                    <div class="row g-2">
+                                        <div class="col-md-4">
+                                            <div class="small text-muted mb-1">CPF</div>
+                                            <div class="fw-medium">{{ advogado.cpf|format_cpf }}</div>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <div class="small text-muted mb-1">Nome</div>
+                                            <div class="fw-medium">{{ advogado.nome }}</div>
+                                        </div>
+                                        {% if advogado.telefone %}
+                                        <div class="col-md-4">
+                                            <div class="small text-muted mb-1">
+                                                <i class="bi bi-telephone"></i> Telefone
+                                            </div>
+                                            <div>{{ advogado.telefone|format_telefone }}</div>
+                                        </div>
+                                        {% endif %}
+                                        {% if advogado.email %}
+                                        <div class="col-md-8">
+                                            <div class="small text-muted mb-1">
+                                                <i class="bi bi-envelope"></i> E-mail
+                                            </div>
+                                            <div>{{ advogado.email }}</div>
+                                        </div>
+                                        {% endif %}
+                                        {% if advogado.endereco %}
+                                        <div class="col-12">
+                                            <div class="small text-muted mb-1">
+                                                <i class="bi bi-geo-alt"></i> Endereço
+                                            </div>
+                                            <div>{{ advogado.endereco }}</div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Card 1.4: Documentos (READ ONLY) -->
+                    <div class="card mb-4">
+                        <div class="card-header py-3 bg-light">
+                            <h5 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>Documentos Solicitados</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if protocolo.lista_documentos %}
+                                <ul class="list-unstyled mb-0">
+                                    {% for doc in protocolo.lista_documentos %}
+                                    <li class="mb-2">
+                                        <i class="bi bi-check-circle text-success me-2"></i>{{ doc }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <div class="alert alert-info mb-0">
+                                    <i class="bi bi-info-circle me-1"></i>Nenhum documento especificado.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Card 1.5: Observações -->
+                    <div class="card mb-4">
+                        <div class="card-header py-3 bg-light">
+                            <h5 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Observações</h5>
+                        </div>
+                        <div class="card-body">
+                            {{ form.observacoes.label_tag }}
+                            {{ form.observacoes }}
+                            {% if form.observacoes.errors %}
+                                <div class="invalid-feedback d-block">{{ form.observacoes.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">
+                                Utilize este campo para anotações gerais sobre o protocolo.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ========== TAB 2: COMENTÁRIOS ========== -->
+                <div class="tab-pane fade" id="comentarios-pane" role="tabpanel">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <h5 class="mb-4">
+                                <i class="bi bi-chat-left-text me-2"></i>Comentários Internos
+                            </h5>
+
+                            <!-- Lista de Comentários Existentes -->
+                            {% if comentarios %}
+                                {% for comentario in comentarios %}
+                                <div class="card mb-3 border-start border-primary border-3">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <strong class="text-primary">
+                                                    {{ comentario.usuario.get_full_name|default:comentario.usuario.username }}
+                                                </strong>
+                                                <span class="badge bg-secondary-subtle text-secondary ms-2">
+                                                    {{ comentario.usuario.get_role_display }}
+                                                </span>
+                                            </div>
+                                            <small class="text-muted">
+                                                <i class="bi bi-clock me-1"></i>
+                                                {{ comentario.data_criacao|date:"d/m/Y H:i" }}
+                                            </small>
+                                        </div>
+                                        <p class="mb-0">{{ comentario.texto|linebreaks }}</p>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Nenhum comentário registrado ainda.
+                                </div>
+                            {% endif %}
+
+                            <!-- Placeholder: Adicionar Comentário -->
+                            <div class="card bg-light border-0 mt-4">
+                                <div class="card-body">
+                                    <h6 class="mb-3">
+                                        <i class="bi bi-plus-circle me-1"></i>Adicionar Comentário
+                                    </h6>
+                                    <textarea class="form-control mb-3" rows="3"
+                                              placeholder="Digite seu comentário..." disabled></textarea>
+                                    <button type="button" class="btn btn-primary" disabled>
+                                        <i class="bi bi-send me-1"></i>Adicionar Comentário
+                                    </button>
+                                    <div class="form-text mt-2">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Funcionalidade em desenvolvimento
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Card: Lista de Documentos -->
-            <div class="card mb-4">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-file-earmark-check me-2"></i>Documentos Solicitados</h5>
-                    {% if not success %}
-                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="adicionarDocumento()">
-                        <i class="bi bi-plus-lg me-1"></i>Adicionar
+                <!-- ========== TAB 3: TAREFAS ========== -->
+                <div class="tab-pane fade" id="tarefas-pane" role="tabpanel">
+                    <div class="text-center py-5">
+                        <i class="bi bi-list-check text-muted" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3 text-muted">Em breve: Gestão de Tarefas</h4>
+                        <p class="text-muted">
+                            Esta funcionalidade permitirá criar e acompanhar tarefas relacionadas ao protocolo.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- ========== TAB 4: CONTROLE DA ESCRITURA (HIDDEN) ========== -->
+                <div class="tab-pane fade" id="escritura-pane" role="tabpanel" style="display: none;">
+                    <!-- Tab exclusiva para Atos Notariais - hidden para Certidões -->
+                </div>
+
+                <!-- ========== TAB 5: CONCLUSÃO ========== -->
+                <div class="tab-pane fade" id="conclusao-pane" role="tabpanel">
+                    <div class="text-center py-5">
+                        <i class="bi bi-check-circle text-muted" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3 text-muted">Conclusão do Protocolo</h4>
+                        <p class="text-muted">
+                            Esta aba será habilitada quando o protocolo estiver pronto para conclusão.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Action Footer -->
+        <div class="card-footer bg-transparent border-top mt-0">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <!-- Botões à Esquerda -->
+                <div class="d-flex gap-2">
+                    <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Voltar
+                    </a>
+                    <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="bi bi-printer me-1"></i>Imprimir Protocolo
+                    </button>
+                </div>
+
+                <!-- Botões à Direita -->
+                <div class="d-flex gap-2">
+                    <!-- Oculto para Certidões -->
+                    <button type="button" class="btn btn-warning" style="display: none;" disabled>
+                        <i class="bi bi-pencil-square me-1"></i>Declarar Ato Escriturado
+                    </button>
+
+                    <!-- Botão de Salvar - Visível apenas se user_can_edit -->
+                    {% if user_can_edit %}
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-check-lg me-1"></i>Salvar Alterações
                     </button>
                     {% endif %}
-                </div>
-                <div class="card-body" id="listaDocumentos">
-                    <!-- Itens serão adicionados via JS -->
-                </div>
-                <div class="card-footer bg-light text-muted small">
-                    <i class="bi bi-info-circle me-1"></i>
-                    Liste os documentos que o cliente precisa apresentar ou que serão emitidos.
-                </div>
-            </div>
 
-            <!-- Card: Observações -->
-            <div class="card mb-4">
-                <div class="card-header py-3">
-                    <h5 class="mb-0"><i class="bi bi-chat-left-text me-2"></i>Observações</h5>
-                </div>
-                <div class="card-body">
-                    {{ form.observacoes }}
+                    <!-- Botão Concluir - Placeholder para implementação futura -->
+                    <button type="button" class="btn btn-success" disabled
+                            data-bs-toggle="tooltip"
+                            title="Funcionalidade em desenvolvimento">
+                        <i class="bi bi-check-circle me-1"></i>Concluir Certidão
+                    </button>
                 </div>
             </div>
         </div>
-
-        <!-- Coluna Lateral -->
-        <div class="col-12 col-xl-4">
-            <!-- Card: Financeiro -->
-            <div class="card mb-4">
-                <div class="card-header py-3">
-                    <h5 class="mb-0"><i class="bi bi-cash-coin me-2"></i>Financeiro</h5>
-                </div>
-                <div class="card-body">
-                    <label class="form-label fw-medium" for="id_deposito_previo">
-                        Depósito Prévio (R$) <span class="text-danger">*</span>
-                    </label>
-                    <div class="input-group">
-                        <span class="input-group-text">R$</span>
-                        {{ form.deposito_previo }}
-                    </div>
-                    {% if form.deposito_previo.errors %}
-                    <div class="invalid-feedback d-block">{{ form.deposito_previo.errors|join:', ' }}</div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Card: Resumo/Ajuda -->
-            <div class="card bg-light border-0">
-                <div class="card-body">
-                    <h6 class="card-title"><i class="bi bi-lightbulb me-1"></i>Dicas</h6>
-                    <hr>
-                    <ul class="small text-muted mb-0 ps-3">
-                        <li class="mb-2">Adicione ao menos um <strong>solicitante</strong>.</li>
-                        <li class="mb-2">Se o cliente não existir, ele será <strong>cadastrado automaticamente</strong> ao salvar.</li>
-                        <li class="mb-2">Advogados usam a mesma base de clientes.</li>
-                        <li>Documentos são opcionais, mas ajudam no controle.</li>
-                    </ul>
-                </div>
-            </div>
-
-            {% if is_edit and protocolo %}
-            <div class="card border-0 bg-info-subtle mt-3">
-                <div class="card-body">
-                    <h6 class="text-info"><i class="bi bi-info-circle me-1"></i>Informações</h6>
-                    <hr class="border-info">
-                    <ul class="list-unstyled small mb-0">
-                        <li><strong>Criado por:</strong> {{ protocolo.criado_por.get_full_name|default:protocolo.criado_por.username }}</li>
-                        <li><strong>Data:</strong> {{ protocolo.data_criacao|date:"d/m/Y H:i" }}</li>
-                        <li><strong>Status:</strong> {{ protocolo.get_status_display }}</li>
-                    </ul>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-
-    {% if success %}
-    </fieldset>
-    {% endif %}
-
-    <!-- Botões de Ação -->
-    <div class="d-flex justify-content-end gap-2 mt-4 mb-5">
-        {% if success %}
-            <!-- Botões após salvamento bem-sucedido -->
-            <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-lg">
-                <i class="bi bi-house me-1"></i>Home
-            </a>
-            <button type="button" class="btn btn-primary btn-lg" onclick="window.print()">
-                <i class="bi bi-printer me-1"></i>Imprimir
-            </button>
-        {% else %}
-            <!-- Botões no fluxo normal/edição -->
-            <a href="{% url 'home' %}" class="btn btn-outline-secondary">
-                <i class="bi bi-x-lg me-1"></i>Cancelar
-            </a>
-            <button type="submit" class="btn btn-primary btn-lg">
-                <i class="bi bi-check-lg me-1"></i>{{ button_text }}
-            </button>
-        {% endif %}
     </div>
 </form>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-    /* Estilos para campos desabilitados quando protocolo foi salvo */
-    fieldset:disabled {
-        opacity: 0.85;
-        pointer-events: none;
-    }
-    
-    fieldset:disabled .form-control,
-    fieldset:disabled .form-select,
-    fieldset:disabled .btn:not(.btn-close) {
-        cursor: not-allowed;
-        background-color: #f8f9fa;
-    }
-    
-    fieldset:disabled .pessoa-card {
-        opacity: 0.9;
-    }
-    
-    .pessoa-row input:read-only {
-        background-color: #e9ecef;
-    }
-    
-    .documento-item {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 0.5rem;
-    }
-    
-    .documento-item input {
-        flex: 1;
-    }
-    
-    #listaDocumentos:empty::after {
-        content: 'Nenhum documento adicionado. Clique em "Adicionar" para incluir.';
-        display: block;
-        text-align: center;
-        color: #6c757d;
-        padding: 2rem;
-    }
-    
-    #listaClientes:empty::after,
-    #listaAdvogados:empty::after {
-        content: 'Nenhum registro. Clique em "Adicionar" para incluir.';
-        display: block;
-        text-align: center;
-        color: #6c757d;
-        padding: 2rem;
-        background: #f8f9fa;
-        border-radius: 0.5rem;
-        border: 2px dashed #dee2e6;
-    }
-    
-    /* Estilo dos cards de pessoa */
-    .pessoa-card {
-        transition: all 0.3s ease;
-    }
-    
-    .pessoa-card:hover {
-        box-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.1);
-    }
-    
-    .pessoa-card .form-label {
-        font-weight: 500;
-    }
-    
-    .pessoa-card .form-control:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
-    }
-</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    
-    // ========== MÁSCARAS ==========
-    
-    function maskCPF(value) {
-        let v = value.replace(/\D/g, '').substring(0, 11);
-        if (v.length > 9) {
-            v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
-        } else if (v.length > 6) {
-            v = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
-        } else if (v.length > 3) {
-            v = v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
-        }
-        return v;
-    }
-    
-    function maskCNPJ(value) {
-        let v = value.replace(/\D/g, '').substring(0, 14);
-        if (v.length > 12) {
-            v = v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})/, '$1.$2.$3/$4-$5');
-        } else if (v.length > 8) {
-            v = v.replace(/(\d{2})(\d{3})(\d{3})(\d{1,4})/, '$1.$2.$3/$4');
-        } else if (v.length > 5) {
-            v = v.replace(/(\d{2})(\d{3})(\d{1,3})/, '$1.$2.$3');
-        } else if (v.length > 2) {
-            v = v.replace(/(\d{2})(\d{1,3})/, '$1.$2');
-        }
-        return v;
-    }
-    
-    function maskDocumento(value) {
-        const digits = value.replace(/\D/g, '');
-        if (digits.length <= 11) {
-            return maskCPF(value);
-        } else {
-            return maskCNPJ(value);
+    // Inicializar tooltips Bootstrap
+    const tooltips = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltips.map(el => new bootstrap.Tooltip(el));
+
+    // Persistência de aba ativa (sessionStorage)
+    const activeTab = sessionStorage.getItem('activeProtocolTab');
+    if (activeTab) {
+        const tab = document.querySelector(`button[data-bs-target="${activeTab}"]`);
+        if (tab && !tab.disabled) {
+            new bootstrap.Tab(tab).show();
         }
     }
-    
-    // ========== TOGGLE ADVOGADOS ==========
-    
-    const toggleAdvogados = document.getElementById('toggle_advogados');
-    const advogadosContainer = document.getElementById('advogados_container');
-    
-    toggleAdvogados.addEventListener('change', function() {
-        if (this.checked) {
-            advogadosContainer.style.display = 'block';
-        } else {
-            advogadosContainer.style.display = 'none';
-            // Limpa lista de advogados
-            document.getElementById('listaAdvogados').innerHTML = '';
-        }
+
+    // Salvar aba ativa ao trocar
+    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', e => {
+            sessionStorage.setItem('activeProtocolTab', e.target.getAttribute('data-bs-target'));
+        });
     });
-    
-    // ========== MÁSCARA DE TELEFONE ==========
-    
-    function maskTelefone(value) {
-        let v = value.replace(/\D/g, '').substring(0, 11);
-        if (v.length > 10) {
-            // Celular: (00) 00000-0000
-            v = v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-        } else if (v.length > 6) {
-            // Fixo: (00) 0000-0000
-            v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
-        } else if (v.length > 2) {
-            v = v.replace(/(\d{2})(\d{0,5})/, '($1) $2');
-        }
-        return v;
-    }
-    
-    // ========== GESTÃO DE PESSOAS (CLIENTES/ADVOGADOS) ==========
-    
-    const isSuccess = {{ success|yesno:"true,false" }};
-    
-    let pessoaCounter = 0;
-    
-    window.adicionarPessoa = function(tipo, dados = {}) {
-        // Não permite adicionar se o protocolo já foi salvo
-        if (isSuccess) {
-            return;
-        }
-        const lista = document.getElementById('lista' + (tipo === 'cliente' ? 'Clientes' : 'Advogados'));
-        const card = document.createElement('div');
-        card.className = 'pessoa-card card border mb-3';
-        pessoaCounter++;
-        
-        const idValue = dados.id || '';
-        const docValue = dados.documento || '';
-        const nomeValue = dados.nome || '';
-        const telefoneValue = dados.telefone || '';
-        const emailValue = dados.email || '';
-        const enderecoValue = dados.endereco || '';
-        
-        // Advogado: apenas CPF | Cliente: CPF ou CNPJ
-        const isAdvogado = tipo === 'advogado';
-        const placeholderDoc = isAdvogado ? '000.000.000-00' : '000.000.000-00 ou 00.000.000/0000-00';
-        const maxLength = isAdvogado ? '14' : '18';
-        const labelDoc = isAdvogado ? 'CPF do Advogado' : 'CPF/CNPJ';
-        const labelNome = isAdvogado ? 'Nome do Advogado' : 'Nome Completo / Razão Social';
-        const cardBg = isAdvogado ? 'bg-light' : '';
-        
-        card.innerHTML = `
-            <div class="card-body ${cardBg}">
-                <input type="hidden" name="${tipo}_id[]" value="${idValue}" class="pessoa-id">
-                
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <span class="badge bg-secondary-subtle text-secondary">
-                        <i class="bi bi-person me-1"></i>${isAdvogado ? 'Advogado' : 'Solicitante'} #${pessoaCounter}
-                    </span>
-                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removerPessoa(this)" title="Remover">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-                
-                <!-- Linha 1: Documento e Nome -->
-                <div class="row g-2 mb-2">
-                    <div class="col-md-4">
-                        <label class="form-label small text-muted mb-1">${labelDoc} <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control documento-input" 
-                               name="${tipo}_documento[]" 
-                               placeholder="${placeholderDoc}"
-                               value="${docValue}"
-                               maxlength="${maxLength}"
-                               data-tipo="${tipo}"
-                               required>
-                    </div>
-                    <div class="col-md-8">
-                        <label class="form-label small text-muted mb-1">${labelNome} <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control nome-input" 
-                               name="${tipo}_nome[]" 
-                               placeholder="${labelNome}"
-                               value="${nomeValue}"
-                               required>
-                    </div>
-                </div>
-                
-                <!-- Linha 2: Telefone e E-mail -->
-                <div class="row g-2 mb-2">
-                    <div class="col-md-4">
-                        <label class="form-label small text-muted mb-1"><i class="bi bi-telephone me-1"></i>Telefone</label>
-                        <input type="text" class="form-control telefone-input" 
-                               name="${tipo}_telefone[]" 
-                               placeholder="(00) 00000-0000"
-                               value="${telefoneValue}"
-                               maxlength="15">
-                    </div>
-                    <div class="col-md-8">
-                        <label class="form-label small text-muted mb-1"><i class="bi bi-envelope me-1"></i>E-mail</label>
-                        <input type="email" class="form-control email-input" 
-                               name="${tipo}_email[]" 
-                               placeholder="email@exemplo.com"
-                               value="${emailValue}">
-                    </div>
-                </div>
-                
-                <!-- Linha 3: Endereço -->
-                <div class="row g-2">
-                    <div class="col-12">
-                        <label class="form-label small text-muted mb-1"><i class="bi bi-geo-alt me-1"></i>Endereço</label>
-                        <input type="text" class="form-control endereco-input" 
-                               name="${tipo}_endereco[]" 
-                               placeholder="Rua, número, bairro, cidade - UF"
-                               value="${enderecoValue}">
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        lista.appendChild(card);
-        
-        // Referências aos inputs
-        const docInput = card.querySelector('.documento-input');
-        const nomeInput = card.querySelector('.nome-input');
-        const telefoneInput = card.querySelector('.telefone-input');
-        const emailInput = card.querySelector('.email-input');
-        const enderecoInput = card.querySelector('.endereco-input');
-        const idInput = card.querySelector('.pessoa-id');
-        
-        // Máscara de documento ao digitar
-        docInput.addEventListener('input', function() {
-            if (isAdvogado) {
-                this.value = maskCPF(this.value);
-            } else {
-                this.value = maskDocumento(this.value);
-            }
-        });
-        
-        // Máscara de telefone
-        telefoneInput.addEventListener('input', function() {
-            this.value = maskTelefone(this.value);
-        });
-        
-        // Busca ao sair do campo de documento (apenas se não estiver em modo de sucesso)
-        if (!isSuccess) {
-            docInput.addEventListener('blur', function() {
-                buscarCliente(this, card);
-            });
-        }
-        
-        // Formata valores iniciais
-        if (docValue) {
-            docInput.value = isAdvogado ? maskCPF(docValue) : maskDocumento(docValue);
-        }
-        if (telefoneValue) {
-            telefoneInput.value = maskTelefone(telefoneValue);
-        }
-        
-        // Foca no campo de documento se for novo
-        if (!idValue) {
-            docInput.focus();
-        }
-    };
-    
-    window.removerPessoa = function(btn) {
-        // Não permite remover se o protocolo já foi salvo
-        if (isSuccess) {
-            return;
-        }
-        btn.closest('.pessoa-card').remove();
-    };
-    
-    async function buscarCliente(docInput, card) {
-        const documento = docInput.value.replace(/\D/g, '');
-        
-        if (documento.length < 11) {
-            return; // Documento muito curto
-        }
-        
-        // Referencias aos campos do card
-        const nomeInput = card.querySelector('.nome-input');
-        const telefoneInput = card.querySelector('.telefone-input');
-        const emailInput = card.querySelector('.email-input');
-        const enderecoInput = card.querySelector('.endereco-input');
-        const idInput = card.querySelector('.pessoa-id');
-        
-        try {
-            const response = await fetch(`{% url 'api_buscar_cliente' %}?documento=${documento}`);
-            const data = await response.json();
-            
-            if (data.found) {
-                // Preenche todos os campos
-                nomeInput.value = data.nome;
-                telefoneInput.value = maskTelefone(data.telefone || '');
-                emailInput.value = data.email || '';
-                enderecoInput.value = data.endereco || '';
-                idInput.value = data.id;
-                
-                // Feedback visual de sucesso
-                card.classList.add('border-success');
-                card.querySelector('.card-body').classList.add('bg-success-subtle');
-                
-                setTimeout(() => {
-                    card.classList.remove('border-success');
-                    card.querySelector('.card-body').classList.remove('bg-success-subtle');
-                }, 1500);
-                
-            } else {
-                // Cliente não encontrado - limpa ID e permite edição
-                idInput.value = '';
-                nomeInput.focus();
-            }
-        } catch (error) {
-            console.error('Erro ao buscar cliente:', error);
-        }
-    }
-    
-    // ========== GESTÃO DE DOCUMENTOS ==========
-    
-    window.adicionarDocumento = function(valor = '') {
-        // Não permite adicionar se o protocolo já foi salvo
-        if (isSuccess) {
-            return;
-        }
-        const lista = document.getElementById('listaDocumentos');
-        const item = document.createElement('div');
-        item.className = 'documento-item';
-        
-        item.innerHTML = `
-            <input type="text" class="form-control" 
-                   name="documento_item[]" 
-                   placeholder="Ex: Certidão de Nascimento, RG, Comprovante de Endereço..."
-                   value="${valor}">
-            <button type="button" class="btn btn-outline-danger" onclick="removerDocumento(this)">
-                <i class="bi bi-trash"></i>
-            </button>
-        `;
-        
-        lista.appendChild(item);
-        
-        if (!valor) {
-            item.querySelector('input').focus();
-        }
-    };
-    
-    window.removerDocumento = function(btn) {
-        // Não permite remover se o protocolo já foi salvo
-        if (isSuccess) {
-            return;
-        }
-        btn.closest('.documento-item').remove();
-    };
-    
-    // ========== INICIALIZAÇÃO COM DADOS EXISTENTES ==========
-    
-    // Carrega clientes existentes
-    const clientesData = {{ clientes_data|safe }};
-    if (clientesData && clientesData.length > 0) {
-        clientesData.forEach(c => adicionarPessoa('cliente', c));
-    } else {
-        // Adiciona uma linha vazia para novo protocolo
-        adicionarPessoa('cliente');
-    }
-    
-    // Carrega advogados existentes
-    const advogadosData = {{ advogados_data|safe }};
-    if (advogadosData && advogadosData.length > 0) {
-        advogadosData.forEach(a => adicionarPessoa('advogado', a));
-    }
-    
-    // Carrega documentos existentes
-    const documentosData = {{ documentos_data|safe }};
-    if (documentosData && documentosData.length > 0) {
-        documentosData.forEach(d => adicionarDocumento(d));
-    }
-    
-    // ========== VALIDAÇÃO ANTES DE ENVIAR ==========
-    
-    // Desabilita submissão se já foi salvo
-    if (isSuccess) {
-        document.getElementById('formProtocolo').addEventListener('submit', function(e) {
-            e.preventDefault();
-            return false;
-        });
-    } else {
-        document.getElementById('formProtocolo').addEventListener('submit', function(e) {
-        const clientes = document.querySelectorAll('#listaClientes .pessoa-card');
-        let temClienteValido = false;
-        
-        clientes.forEach(card => {
-            const doc = card.querySelector('.documento-input').value.replace(/\D/g, '');
-            const nome = card.querySelector('.nome-input').value.trim();
-            if (doc.length >= 11 && nome) {
-                temClienteValido = true;
-            }
-        });
-        
-        if (!temClienteValido) {
-            e.preventDefault();
-            alert('Adicione pelo menos um solicitante com CPF/CNPJ e nome válidos.');
-            return false;
-        }
-    });
-    }
 });
 </script>
 {% endblock %}
